@@ -28,16 +28,19 @@ A platform connecting students with tutors for personalized learning experiences
 ### Installation
 
 1. Clone the repository:
+
 ```bash
-git clone <repository-url>
+git clone <https://github.com/Sijan-Bhusal/tutor-hub.git>
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Start the development server:
+
 ```bash
 npm run dev
 ```
