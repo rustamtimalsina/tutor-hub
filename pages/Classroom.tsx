@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Mic, MicOff, Video, VideoOff, ScreenShare, PhoneOff, 
   PenTool, Eraser, RotateCcw, Download, MessageSquare, 
-  FileText, Users, Sparkles, Send, CheckCircle2, Sliders
+  FileText, Users, Sparkles, Send, CheckCircle2, Sliders,
+  Bot, HelpCircle, Lightbulb, Compass, Play
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import confetti from 'canvas-confetti';
@@ -11,6 +12,12 @@ import confetti from 'canvas-confetti';
 interface Point {
   x: number;
   y: number;
+}
+
+interface AIMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  time: string;
 }
 
 const Classroom: React.FC = () => {
@@ -33,8 +40,13 @@ const Classroom: React.FC = () => {
   const [micOn, setMicOn] = useState(true);
   const [videoOn, setVideoOn] = useState(true);
   const [screenSharing, setScreenSharing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'notes'>('chat');
+  const [activeTab, setActiveTab] = useState<'chat' | 'notes' | 'ai'>('chat');
   const [reaction, setReaction] = useState<string | null>(null);
+
+  // Real Webcam / Media Stream
+  const userVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [hasWebcam, setHasWebcam] = useState(false);
 
   // Whiteboard Canvas
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -54,13 +66,24 @@ const Classroom: React.FC = () => {
   ]);
   const [inputText, setInputText] = useState('');
 
+  // AI Copilot State
+  const [aiMessages, setAiMessages] = useState<AIMessage[]>([
+    {
+      role: 'assistant',
+      content: `Hello! I'm your AI Study Assistant for this ${session.subject} session. Ask me to break down formulas, generate practice questions, or explain tricky concepts in simple terms!`,
+      time: '10:00 AM',
+    },
+  ]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+
   // Shared Notes
   const [sharedNotes, setSharedNotes] = useState(
     "📝 Lesson Plan:\n1. Derivative of Composite Functions (Chain Rule)\n2. Implicit Differentiation\n3. Physics application: Velocity & Acceleration\n\nNotes from Tutor:\n- Recall that d/dx [f(g(x))] = f'(g(x)) * g'(x)"
   );
 
   // Timer
-  const [secondsElapsed, setSecondsElapsed] = useState(20);
+  const [secondsElapsed, setSecondsElapsed] = useState(35);
   useEffect(() => {
     const timer = setInterval(() => setSecondsElapsed((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
@@ -70,6 +93,48 @@ const Classroom: React.FC = () => {
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Real Camera Activation
+  const toggleCamera = async () => {
+    if (videoOn && hasWebcam && localStream) {
+      localStream.getVideoTracks().forEach((track) => track.stop());
+      setLocalStream(null);
+      setHasWebcam(false);
+      setVideoOn(false);
+    } else if (!videoOn) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: micOn });
+        setLocalStream(stream);
+        setHasWebcam(true);
+        setVideoOn(true);
+        if (userVideoRef.current) {
+          userVideoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        // Fallback to avatar mode
+        setVideoOn(true);
+        setHasWebcam(false);
+      }
+    } else {
+      setVideoOn(false);
+    }
+  };
+
+  const toggleScreenShare = async () => {
+    if (!screenSharing) {
+      try {
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        setScreenSharing(true);
+        displayStream.getVideoTracks()[0].onended = () => {
+          setScreenSharing(false);
+        };
+      } catch {
+        setScreenSharing(false);
+      }
+    } else {
+      setScreenSharing(false);
+    }
   };
 
   // High-DPI Grid Drawing
@@ -96,7 +161,7 @@ const Classroom: React.FC = () => {
     ctx.restore();
   }, []);
 
-  // Initialize Canvas with Retina / High-DPI resolution
+  // Initialize Canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -117,7 +182,6 @@ const Classroom: React.FC = () => {
     drawGrid(ctx, rect.width, rect.height);
   }, [drawGrid]);
 
-  // Pointer Event Coordinates (relative to canvas css dimensions)
   const getCoordinates = (e: React.PointerEvent<HTMLCanvasElement>): Point | null => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
@@ -128,7 +192,6 @@ const Classroom: React.FC = () => {
     };
   };
 
-  // Start Drawing with Pointer capture
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const pt = getCoordinates(e);
     if (!pt) return;
@@ -148,7 +211,6 @@ const Classroom: React.FC = () => {
     ctx.fill();
   };
 
-  // Buttery Smooth Bézier Quadratic Spline Curve drawing
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
     const pt = getCoordinates(e);
@@ -217,6 +279,47 @@ const Classroom: React.FC = () => {
     setInputText('');
   };
 
+  // AI Copilot Generator
+  const handleAskAI = (promptText?: string) => {
+    const query = promptText || aiInput;
+    if (!query.trim()) return;
+
+    const userMsg: AIMessage = {
+      role: 'user',
+      content: query,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setAiMessages((prev) => [...prev, userMsg]);
+    setAiInput('');
+    setAiLoading(true);
+
+    setTimeout(() => {
+      let response = '';
+      const lower = query.toLowerCase();
+
+      if (lower.includes('chain rule') || lower.includes('derivative')) {
+        response = `💡 **Chain Rule Breakdown:**\nIf $y = f(g(x))$, then $\\frac{dy}{dx} = f'(g(x)) \\cdot g'(x)$.\n\n**Example:** To differentiate $\\sin(3x^2)$:\n1. Outer function: $f(u) = \\sin(u) \\rightarrow f'(u) = \\cos(u)$\n2. Inner function: $g(x) = 3x^2 \\rightarrow g'(x) = 6x$\n3. Result: $6x \\cdot \\cos(3x^2)$.`;
+      } else if (lower.includes('question') || lower.includes('practice') || lower.includes('quiz')) {
+        response = `📝 **Quick Practice Challenge:**\nFind the derivative of $f(x) = (4x^3 - 2x)^5$.\n\n*Hint:* Apply the power rule to the outside bracket first, then multiply by the derivative of the inside polynomial! Try working it out on your whiteboard!`;
+      } else if (lower.includes('summary') || lower.includes('takeaway')) {
+        response = `🎯 **Session Key Takeaways:**\n- Always identify the "outer" and "inner" functions before differentiating.\n- Don't forget the negative sign when differentiating cosine: $\\frac{d}{dx}[\\cos(x)] = -\\sin(x)$.\n- Verify critical points where $f'(x) = 0$ for local maxima/minima.`;
+      } else {
+        response = `Great question on ${session.subject}! Remember to check dimensional units and break complex problems into 2-step modular equations. Ask your mentor ${session.tutorName} to sketch the graph on the whiteboard!`;
+      }
+
+      setAiMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: response,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+      setAiLoading(false);
+    }, 700);
+  };
+
   const triggerReaction = (emoji: string) => {
     setReaction(emoji);
     try {
@@ -236,7 +339,7 @@ const Classroom: React.FC = () => {
       {/* Top Header Bar */}
       <header className="h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-6 flex items-center justify-between z-30">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary-600 rounded-xl shadow-md shadow-primary-500/20">
+          <div className="p-2 bg-gradient-to-tr from-primary-600 to-indigo-600 rounded-xl shadow-md shadow-primary-500/20">
             <Video className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -301,14 +404,23 @@ const Classroom: React.FC = () => {
               )}
             </div>
 
-            {/* Student Video */}
+            {/* Student Video (Real Camera or Avatar) */}
             <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden relative shadow-lg flex items-center justify-center">
-              {videoOn ? (
+              {hasWebcam && videoOn ? (
+                <video
+                  ref={userVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover scale-x-[-1]"
+                />
+              ) : videoOn ? (
                 <div className="w-full h-full bg-gradient-to-tr from-slate-900 to-indigo-950 flex flex-col items-center justify-center text-center p-4">
                   <div className="h-16 w-16 rounded-full bg-primary-600 flex items-center justify-center text-2xl font-black text-white shadow-lg mb-2">
                     A
                   </div>
                   <span className="text-xs font-bold text-slate-300">Alex Johnson (You)</span>
+                  <span className="text-[10px] text-slate-400 mt-1">Camera enabled</span>
                 </div>
               ) : (
                 <div className="text-center text-slate-500 text-xs">
@@ -434,16 +546,16 @@ const Classroom: React.FC = () => {
               {micOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
             </button>
             <button
-              onClick={() => setVideoOn(!videoOn)}
+              onClick={toggleCamera}
               className={`p-3 rounded-2xl transition-all ${
                 videoOn ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
               }`}
-              title={videoOn ? 'Turn Video Off' : 'Turn Video On'}
+              title={videoOn ? 'Turn Camera Off' : 'Turn Camera On'}
             >
               {videoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
             </button>
             <button
-              onClick={() => setScreenSharing(!screenSharing)}
+              onClick={toggleScreenShare}
               className={`p-3 rounded-2xl transition-all ${
                 screenSharing ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30' : 'bg-slate-800 text-white hover:bg-slate-700'
               }`}
@@ -455,31 +567,39 @@ const Classroom: React.FC = () => {
 
         </div>
 
-        {/* Right Sidebar: Chat & Notes */}
+        {/* Right Sidebar: Chat, Notes & AI Copilot */}
         <aside className="w-80 sm:w-96 bg-slate-950 border-l border-slate-800 flex flex-col">
           
           {/* Tabs */}
-          <div className="p-3 border-b border-slate-800 flex gap-2">
+          <div className="p-3 border-b border-slate-800 flex gap-1.5">
             <button
               onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+              className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all ${
                 activeTab === 'chat' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              <MessageSquare className="h-4 w-4" /> Live Chat
+              <MessageSquare className="h-3.5 w-3.5" /> Chat
             </button>
             <button
               onClick={() => setActiveTab('notes')}
-              className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+              className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all ${
                 activeTab === 'notes' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
             >
-              <FileText className="h-4 w-4" /> Shared Notes
+              <FileText className="h-3.5 w-3.5" /> Notes
+            </button>
+            <button
+              onClick={() => setActiveTab('ai')}
+              className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all ${
+                activeTab === 'ai' ? 'bg-gradient-to-r from-amber-500 to-primary-600 text-white shadow-md' : 'text-amber-400 hover:text-amber-300'
+              }`}
+            >
+              <Bot className="h-3.5 w-3.5" /> AI Copilot
             </button>
           </div>
 
-          {/* Chat & Notes Content */}
-          {activeTab === 'chat' ? (
+          {/* TAB 1: Live Chat */}
+          {activeTab === 'chat' && (
             <div className="flex-1 flex flex-col justify-between p-4 overflow-hidden">
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
                 {chatMessages.map((msg, i) => (
@@ -519,7 +639,10 @@ const Classroom: React.FC = () => {
                 </button>
               </form>
             </div>
-          ) : (
+          )}
+
+          {/* TAB 2: Notes */}
+          {activeTab === 'notes' && (
             <div className="flex-1 flex flex-col p-4 overflow-hidden">
               <span className="text-[11px] text-slate-400 font-bold mb-2">Live Collaborative Notepad:</span>
               <textarea
@@ -529,6 +652,87 @@ const Classroom: React.FC = () => {
                 placeholder="Type real-time study notes here..."
               />
               <span className="text-[10px] text-slate-500 mt-2">Changes are synchronized live with the educator.</span>
+            </div>
+          )}
+
+          {/* TAB 3: AI Copilot */}
+          {activeTab === 'ai' && (
+            <div className="flex-1 flex flex-col justify-between p-4 overflow-hidden">
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+                
+                {/* Quick Prompts */}
+                <div className="p-2.5 bg-slate-900 rounded-2xl border border-slate-800 space-y-1.5">
+                  <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" /> Quick AI Prompts
+                  </span>
+                  <div className="flex flex-col gap-1">
+                    <button
+                      onClick={() => handleAskAI('Explain chain rule step-by-step with an example')}
+                      className="text-left text-[11px] p-1.5 bg-slate-800/80 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
+                    >
+                      ⚡ Explain Chain Rule with example
+                    </button>
+                    <button
+                      onClick={() => handleAskAI('Generate 1 practice calculus question')}
+                      className="text-left text-[11px] p-1.5 bg-slate-800/80 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
+                    >
+                      🎯 Give me a practice question
+                    </button>
+                    <button
+                      onClick={() => handleAskAI('Summarize key takeaways for this topic')}
+                      className="text-left text-[11px] p-1.5 bg-slate-800/80 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
+                    >
+                      📋 Summarize key takeaways
+                    </button>
+                  </div>
+                </div>
+
+                {/* AI Chat History */}
+                {aiMessages.map((msg, i) => (
+                  <div
+                    key={i}
+                    className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+                  >
+                    <span className="text-[10px] text-slate-500 font-semibold mb-1 flex items-center gap-1">
+                      {msg.role === 'user' ? 'You' : <><Bot className="h-3 w-3 text-amber-400" /> AI Copilot</>} • {msg.time}
+                    </span>
+                    <div
+                      className={`p-3 rounded-2xl max-w-[90%] text-xs leading-relaxed whitespace-pre-line ${
+                        msg.role === 'user'
+                          ? 'bg-primary-600 text-white font-medium rounded-tr-none'
+                          : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none shadow-md'
+                      }`}
+                    >
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+
+                {aiLoading && (
+                  <div className="flex items-center gap-2 text-xs text-amber-400 p-2">
+                    <Sparkles className="h-4 w-4 animate-spin" />
+                    <span>AI Copilot is solving...</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-3 border-t border-slate-800 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Ask AI Copilot anything..."
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAskAI()}
+                  className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAskAI()}
+                  className="p-2.5 bg-gradient-to-r from-amber-500 to-primary-600 hover:opacity-90 text-white rounded-xl shadow-md transition-opacity"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           )}
 

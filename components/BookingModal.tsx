@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, Calendar, Clock, DollarSign, Sparkles, ArrowRight } from 'lucide-react';
+import { 
+  X, CheckCircle, Calendar, Clock, DollarSign, Sparkles, 
+  ArrowRight, CreditCard, ShieldCheck, Receipt, Wallet, Lock
+} from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Tutor } from '../types';
 import { useApp } from '../context/AppContext';
@@ -14,44 +17,58 @@ interface BookingModalProps {
 const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) => {
   const { addSession } = useApp();
   const navigate = useNavigate();
-  const [step, setStep] = useState<'select' | 'success'>('select');
+  
+  const [step, setStep] = useState<'select' | 'payment' | 'success'>('select');
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [duration, setDuration] = useState<number>(1);
   const [selectedSubject, setSelectedSubject] = useState<string>(tutor.subjects[0] || 'General');
+
+  // Payment method
+  const [paymentMethod, setPaymentMethod] = useState<'khalti' | 'esewa' | 'card'>('khalti');
+  const [walletPhone, setWalletPhone] = useState('98XXXXXXXX');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [txRef, setTxRef] = useState('');
 
   if (!isOpen) return null;
 
   const totalPrice = tutor.price * duration;
   const timeSlots = ['09:00 AM', '10:00 AM', '11:30 AM', '02:00 PM', '04:00 PM', '06:30 PM'];
 
-  const handleConfirm = () => {
+  const handleProceedToPayment = () => {
     if (!selectedDate || !selectedTime) return;
+    setStep('payment');
+  };
 
-    // Add session to real persistent state
-    addSession({
-      tutorName: tutor.name,
-      subject: selectedSubject,
-      date: selectedDate,
-      time: selectedTime,
-      duration: `${duration} hour${duration > 1 ? 's' : ''}`,
-      price: totalPrice,
-      status: 'Upcoming',
-    });
+  const handleProcessPayment = () => {
+    setIsProcessing(true);
+    setTimeout(() => {
+      const generatedRef = `${paymentMethod.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
+      setTxRef(generatedRef);
 
-    // Fire Confetti
-    try {
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#7c3aed', '#06b6d4', '#10b981', '#f59e0b'],
+      // Add to store
+      addSession({
+        tutorName: tutor.name,
+        subject: selectedSubject,
+        date: selectedDate,
+        time: selectedTime,
+        duration: `${duration} hour${duration > 1 ? 's' : ''}`,
+        price: totalPrice,
+        status: 'Upcoming',
       });
-    } catch (e) {
-      // safe fallback
-    }
 
-    setStep('success');
+      try {
+        confetti({
+          particleCount: 100,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#7c3aed', '#06b6d4', '#10b981', '#f59e0b'],
+        });
+      } catch {}
+
+      setIsProcessing(false);
+      setStep('success');
+    }, 1200);
   };
 
   const handleClose = () => {
@@ -70,7 +87,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) =
     <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
         
-        {/* Backdrop with blur */}
+        {/* Backdrop */}
         <div 
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
           aria-hidden="true" 
@@ -88,10 +105,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) =
               </div>
               <div>
                 <h3 className="text-lg font-bold leading-tight" id="modal-title">
-                  {step === 'success' ? 'Booking Confirmed!' : `Book Session with ${tutor.name}`}
+                  {step === 'select' && `Schedule with ${tutor.name}`}
+                  {step === 'payment' && 'Secure Escrow Checkout'}
+                  {step === 'success' && 'Booking Confirmed!'}
                 </h3>
                 <p className="text-xs text-primary-200 mt-0.5">
-                  {step === 'success' ? 'Session successfully scheduled' : `NPR ${tutor.price}/hr • ${tutor.experience} Experience`}
+                  {step === 'select' && `NPR ${tutor.price}/hr • ${tutor.experience} Experience`}
+                  {step === 'payment' && 'Protected by 256-bit encrypted escrow'}
+                  {step === 'success' && 'Session successfully booked & added to calendar'}
                 </p>
               </div>
             </div>
@@ -105,6 +126,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) =
 
           {/* Body */}
           <div className="p-6">
+            
+            {/* STEP 1: Select Date & Time */}
             {step === 'select' && (
               <div className="space-y-5">
                 {/* Subject Selector */}
@@ -190,7 +213,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) =
                 <div className="bg-gradient-to-br from-primary-50 to-indigo-50/50 p-4 rounded-2xl border border-primary-100 flex justify-between items-center">
                   <div>
                     <span className="text-xs uppercase tracking-wider font-semibold text-primary-700">Total Investment</span>
-                    <p className="text-xs text-slate-500">Includes live room & materials</p>
+                    <p className="text-xs text-slate-500">Live 1-on-1 Room + Recording</p>
                   </div>
                   <div className="text-right">
                     <span className="text-2xl font-black text-primary-950">NPR {totalPrice}</span>
@@ -199,17 +222,119 @@ const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) =
               </div>
             )}
 
+            {/* STEP 2: Payment Gateway Selection */}
+            {step === 'payment' && (
+              <div className="space-y-5">
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 flex justify-between items-center text-xs">
+                  <div>
+                    <span className="text-slate-400 font-medium">Session:</span>
+                    <p className="font-bold text-slate-900">{selectedSubject} ({duration} hr)</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-slate-400 font-medium">Payable:</span>
+                    <p className="text-base font-black text-emerald-600">NPR {totalPrice}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
+                    Select Payment Gateway
+                  </label>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('khalti')}
+                      className={`p-3 rounded-2xl border-2 text-center transition-all ${
+                        paymentMethod === 'khalti'
+                          ? 'border-purple-600 bg-purple-50 shadow-md ring-2 ring-purple-200'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="h-6 w-6 rounded-full bg-purple-600 text-white flex items-center justify-center font-black text-[10px] mx-auto mb-1">
+                        K
+                      </div>
+                      <span className="block text-xs font-bold text-slate-900">Khalti</span>
+                      <span className="text-[10px] text-purple-700 font-semibold">Wallet / eBanking</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('esewa')}
+                      className={`p-3 rounded-2xl border-2 text-center transition-all ${
+                        paymentMethod === 'esewa'
+                          ? 'border-emerald-600 bg-emerald-50 shadow-md ring-2 ring-emerald-200'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="h-6 w-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-[10px] mx-auto mb-1">
+                        e
+                      </div>
+                      <span className="block text-xs font-bold text-slate-900">eSewa</span>
+                      <span className="text-[10px] text-emerald-700 font-semibold">Direct Pay</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('card')}
+                      className={`p-3 rounded-2xl border-2 text-center transition-all ${
+                        paymentMethod === 'card'
+                          ? 'border-indigo-600 bg-indigo-50 shadow-md ring-2 ring-indigo-200'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <CreditCard className="h-6 w-6 text-indigo-600 mx-auto mb-1" />
+                      <span className="block text-xs font-bold text-slate-900">Visa / Card</span>
+                      <span className="text-[10px] text-indigo-700 font-semibold">International</span>
+                    </button>
+                  </div>
+                </div>
+
+                {paymentMethod !== 'card' ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1">
+                        {paymentMethod === 'khalti' ? 'Khalti Registered Mobile Number' : 'eSewa ID / Mobile Number'}
+                      </label>
+                      <input
+                        type="text"
+                        value={walletPhone}
+                        onChange={(e) => setWalletPhone(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono font-bold text-slate-800"
+                        placeholder="98XXXXXXXX"
+                      />
+                    </div>
+                    <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/60 text-[11px] text-amber-800 flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                      <span>Funds are held in secure escrow until your lesson is successfully completed.</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1">Card Number</label>
+                      <input
+                        type="text"
+                        defaultValue="4242 •••• •••• 4242"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono font-bold text-slate-800"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 3: Success Screen */}
             {step === 'success' && (
               <div className="text-center py-6">
                 <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-emerald-100 mb-4 animate-bounce">
                   <CheckCircle className="h-12 w-12 text-emerald-600" />
                 </div>
-                <h4 className="text-2xl font-black text-slate-900 mb-1">Session Confirmed!</h4>
-                <p className="text-sm text-slate-500 mb-6">Your session has been scheduled and added to your dashboard.</p>
+                <h4 className="text-2xl font-black text-slate-900 mb-1">Payment Successful!</h4>
+                <p className="text-xs text-slate-500 mb-6">Txn Ref: <span className="font-mono font-bold text-slate-700">{txRef}</span></p>
                 
                 <div className="bg-slate-50 rounded-2xl p-4 text-left border border-slate-100 space-y-2 mb-6 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Tutor:</span>
+                    <span className="text-slate-500">Educator:</span>
                     <span className="font-bold text-slate-800">{tutor.name}</span>
                   </div>
                   <div className="flex justify-between">
@@ -217,12 +342,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) =
                     <span className="font-semibold text-primary-700">{selectedSubject}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Date & Time:</span>
+                    <span className="text-slate-500">Scheduled Time:</span>
                     <span className="font-semibold text-slate-800">{selectedDate} @ {selectedTime}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500">Duration:</span>
-                    <span className="font-semibold text-slate-800">{duration} hour(s)</span>
+                    <span className="text-slate-500">Method:</span>
+                    <span className="font-semibold text-slate-800 uppercase">{paymentMethod} Escrow</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-slate-200">
                     <span className="font-bold text-slate-700">Total Paid:</span>
@@ -235,7 +360,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) =
 
           {/* Footer Actions */}
           <div className="bg-slate-50 px-6 py-4 flex flex-col sm:flex-row-reverse gap-2 border-t border-slate-100">
-            {step === 'select' ? (
+            {step === 'select' && (
               <>
                 <button 
                   type="button" 
@@ -243,9 +368,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) =
                   className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 bg-gradient-to-r from-primary-600 to-indigo-600 text-sm font-bold text-white shadow-lg shadow-primary-200 hover:from-primary-700 hover:to-indigo-700 transition-all ${
                     (!selectedDate || !selectedTime) ? 'opacity-50 cursor-not-allowed shadow-none' : 'hover:-translate-y-0.5'
                   }`}
-                  onClick={handleConfirm}
+                  onClick={handleProceedToPayment}
                 >
-                  Confirm & Schedule
+                  Proceed to Payment <ArrowRight className="h-4 w-4" />
                 </button>
                 <button 
                   type="button" 
@@ -255,7 +380,35 @@ const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) =
                   Cancel
                 </button>
               </>
-            ) : (
+            )}
+
+            {step === 'payment' && (
+              <>
+                <button 
+                  type="button" 
+                  disabled={isProcessing}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition-all"
+                  onClick={handleProcessPayment}
+                >
+                  {isProcessing ? (
+                    <span className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 animate-spin" /> Verifying...
+                    </span>
+                  ) : (
+                    `Pay NPR ${totalPrice} with ${paymentMethod.toUpperCase()}`
+                  )}
+                </button>
+                <button 
+                  type="button" 
+                  className="w-full sm:w-auto inline-flex justify-center rounded-xl px-5 py-3 bg-white text-sm font-bold text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors"
+                  onClick={() => setStep('select')}
+                >
+                  Back
+                </button>
+              </>
+            )}
+
+            {step === 'success' && (
               <>
                 <button 
                   type="button" 
