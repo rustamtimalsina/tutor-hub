@@ -8,9 +8,10 @@ import TutorDashboard from './pages/TutorDashboard';
 import Documentation from './pages/Documentation';
 import Welcome from './pages/Welcome';
 import Classroom from './pages/Classroom';
+import AIAssistantWidget from './components/AIAssistantWidget';
 import { AppProvider } from './context/AppContext';
 
-// Wrapper to conditionally render Navbar
+// Wrapper to conditionally render Navbar & Global AI Widget
 const AppContent: React.FC = () => {
   const location = useLocation();
   // Hide Navbar on the Welcome screen (root path) and inside live Classroom
@@ -30,6 +31,7 @@ const AppContent: React.FC = () => {
           <Route path="/documentation" element={<Documentation />} />
         </Routes>
       </main>
+      <AIAssistantWidget />
     </>
   );
 };
