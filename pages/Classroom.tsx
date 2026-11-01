@@ -1,12 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Mic, MicOff, Video, VideoOff, ScreenShare, PhoneOff, 
   PenTool, Eraser, RotateCcw, Download, MessageSquare, 
-  FileText, Users, Sparkles, Send, CheckCircle2, Maximize2
+  FileText, Users, Sparkles, Send, CheckCircle2, Sliders
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import confetti from 'canvas-confetti';
+
+interface Point {
+  x: number;
+  y: number;
+}
 
 const Classroom: React.FC = () => {
   const { sessionId } = useParams();
@@ -16,7 +21,7 @@ const Classroom: React.FC = () => {
   const session = sessions.find((s) => s.id === sessionId) || {
     id: sessionId || 'demo',
     tutorName: 'Rajesh Sharma',
-    subject: 'Calculus & Physics',
+    subject: 'Mathematics',
     date: 'Today',
     time: 'Live Now',
     duration: '1 Hour',
@@ -35,8 +40,12 @@ const Classroom: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [penColor, setPenColor] = useState('#7c3aed');
-  const [penWidth, setPenWidth] = useState(3);
+  const [penWidth, setPenWidth] = useState(4);
   const [isEraser, setIsEraser] = useState(false);
+  const [showThickness, setShowThickness] = useState(false);
+
+  // Smooth drawing points buffer
+  const pointsRef = useRef<Point[]>([]);
 
   // Chat messages
   const [chatMessages, setChatMessages] = useState([
@@ -51,7 +60,7 @@ const Classroom: React.FC = () => {
   );
 
   // Timer
-  const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [secondsElapsed, setSecondsElapsed] = useState(20);
   useEffect(() => {
     const timer = setInterval(() => setSecondsElapsed((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
@@ -63,80 +72,120 @@ const Classroom: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Canvas Drawing Logic
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    // Resize canvas to match display size
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    // Initial grid pattern on whiteboard
-    drawGrid(ctx, canvas.width, canvas.height);
-  }, []);
-
-  const drawGrid = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+  // High-DPI Grid Drawing
+  const drawGrid = useCallback((ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    ctx.save();
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
 
     ctx.strokeStyle = '#f1f5f9';
     ctx.lineWidth = 1;
 
-    for (let x = 0; x < width; x += 30) {
+    for (let x = 0; x < width; x += 32) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, height);
       ctx.stroke();
     }
-    for (let y = 0; y < height; y += 30) {
+    for (let y = 0; y < height; y += 32) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(width, y);
       ctx.stroke();
     }
+    ctx.restore();
+  }, []);
+
+  // Initialize Canvas with Retina / High-DPI resolution
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.scale(dpr, dpr);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    drawGrid(ctx, rect.width, rect.height);
+  }, [drawGrid]);
+
+  // Pointer Event Coordinates (relative to canvas css dimensions)
+  const getCoordinates = (e: React.PointerEvent<HTMLCanvasElement>): Point | null => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Start Drawing with Pointer capture
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const pt = getCoordinates(e);
+    if (!pt) return;
+
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    setIsDrawing(true);
+    pointsRef.current = [pt];
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
 
     ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.strokeStyle = isEraser ? '#ffffff' : penColor;
-    ctx.lineWidth = isEraser ? penWidth * 5 : penWidth;
-    setIsDrawing(true);
+    ctx.arc(pt.x, pt.y, (isEraser ? penWidth * 3 : penWidth) / 2, 0, Math.PI * 2);
+    ctx.fillStyle = isEraser ? '#ffffff' : penColor;
+    ctx.fill();
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Buttery Smooth Bézier Quadratic Spline Curve drawing
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
+    const pt = getCoordinates(e);
+    if (!pt) return;
+
+    pointsRef.current.push(pt);
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const pts = pointsRef.current;
+    if (pts.length < 2) return;
 
-    ctx.lineTo(x, y);
+    ctx.beginPath();
+    ctx.strokeStyle = isEraser ? '#ffffff' : penColor;
+    ctx.lineWidth = isEraser ? penWidth * 5 : penWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    const p1 = pts[pts.length - 2];
+    const p2 = pts[pts.length - 1];
+    const midPoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+
+    ctx.moveTo(p1.x, p1.y);
+    ctx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
     ctx.stroke();
   };
 
-  const stopDrawing = () => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
     setIsDrawing(false);
+    pointsRef.current = [];
   };
 
   const clearCanvas = () => {
@@ -144,7 +193,8 @@ const Classroom: React.FC = () => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    drawGrid(ctx, canvas.width, canvas.height);
+    const rect = canvas.getBoundingClientRect();
+    drawGrid(ctx, rect.width, rect.height);
   };
 
   const downloadCanvas = () => {
@@ -170,7 +220,7 @@ const Classroom: React.FC = () => {
   const triggerReaction = (emoji: string) => {
     setReaction(emoji);
     try {
-      confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
+      confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
     } catch {}
     setTimeout(() => setReaction(null), 2500);
   };
@@ -181,12 +231,12 @@ const Classroom: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-slate-900 text-white overflow-hidden">
+    <div className="h-screen flex flex-col bg-slate-900 text-white overflow-hidden select-none">
       
       {/* Top Header Bar */}
       <header className="h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-6 flex items-center justify-between z-30">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary-600 rounded-xl">
+          <div className="p-2 bg-primary-600 rounded-xl shadow-md shadow-primary-500/20">
             <Video className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -224,16 +274,17 @@ const Classroom: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Classroom Workspace */}
+      {/* Main Workspace */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* Left: Interactive Canvas & Video Feeds */}
+        {/* Left: Video Feeds & Canvas */}
         <div className="flex-1 flex flex-col p-4 gap-4 overflow-hidden">
           
-          {/* Top Video Tiles */}
+          {/* Video Feeds Grid */}
           <div className="h-44 grid grid-cols-2 gap-4">
-            {/* Tutor Video Tile */}
-            <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden relative shadow-lg group">
+            
+            {/* Tutor Video */}
+            <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden relative shadow-lg">
               <img
                 src="https://picsum.photos/seed/rajesh/600/400"
                 alt="Tutor Feed"
@@ -250,7 +301,7 @@ const Classroom: React.FC = () => {
               )}
             </div>
 
-            {/* Student Video Tile */}
+            {/* Student Video */}
             <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden relative shadow-lg flex items-center justify-center">
               {videoOn ? (
                 <div className="w-full h-full bg-gradient-to-tr from-slate-900 to-indigo-950 flex flex-col items-center justify-center text-center p-4">
@@ -278,7 +329,7 @@ const Classroom: React.FC = () => {
             {/* Whiteboard Floating Toolbar */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-700/80 shadow-2xl flex items-center gap-3">
               
-              {/* Pen Color Presets */}
+              {/* Palette */}
               <div className="flex items-center gap-1.5 pr-3 border-r border-slate-700">
                 {['#7c3aed', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#0f172a'].map((c) => (
                   <button
@@ -315,6 +366,28 @@ const Classroom: React.FC = () => {
                 >
                   <Eraser className="h-4 w-4" />
                 </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowThickness(!showThickness)}
+                    className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    title="Stroke Width"
+                  >
+                    <Sliders className="h-4 w-4" />
+                  </button>
+                  {showThickness && (
+                    <div className="absolute top-12 -left-6 bg-slate-900 border border-slate-700 p-3 rounded-2xl shadow-xl w-36 z-30">
+                      <span className="text-[10px] text-slate-400 font-bold block mb-1">Thickness: {penWidth}px</span>
+                      <input 
+                        type="range" 
+                        min="2" 
+                        max="16" 
+                        value={penWidth} 
+                        onChange={(e) => setPenWidth(Number(e.target.value))}
+                        className="w-full accent-primary-500 cursor-pointer"
+                      />
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={clearCanvas}
                   className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
@@ -339,18 +412,17 @@ const Classroom: React.FC = () => {
 
             </div>
 
-            {/* The Drawing Canvas */}
+            {/* High-DPI Smooth HTML5 Canvas */}
             <canvas
               ref={canvasRef}
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
-              className="w-full h-full cursor-crosshair"
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              className="w-full h-full cursor-crosshair touch-none"
             />
           </div>
 
-          {/* Bottom Call Controls Bar */}
+          {/* Bottom Call Controls */}
           <div className="h-16 bg-slate-950/80 backdrop-blur-md rounded-2xl border border-slate-800 px-6 flex items-center justify-center gap-4">
             <button
               onClick={() => setMicOn(!micOn)}
@@ -386,7 +458,7 @@ const Classroom: React.FC = () => {
         {/* Right Sidebar: Chat & Notes */}
         <aside className="w-80 sm:w-96 bg-slate-950 border-l border-slate-800 flex flex-col">
           
-          {/* Tab Switcher */}
+          {/* Tabs */}
           <div className="p-3 border-b border-slate-800 flex gap-2">
             <button
               onClick={() => setActiveTab('chat')}
@@ -406,7 +478,7 @@ const Classroom: React.FC = () => {
             </button>
           </div>
 
-          {/* Tab Content */}
+          {/* Chat & Notes Content */}
           {activeTab === 'chat' ? (
             <div className="flex-1 flex flex-col justify-between p-4 overflow-hidden">
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
