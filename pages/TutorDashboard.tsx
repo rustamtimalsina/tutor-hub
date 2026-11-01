@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, DollarSign, MessageSquare, Edit2, User, Clock, CheckCircle, Video, TrendingUp, Sparkles } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useApp } from '../context/AppContext';
 import confetti from 'canvas-confetti';
 
 const TutorDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { sessions } = useApp();
   const [pendingRequests, setPendingRequests] = useState([
     { id: 'req-1', student: 'Sita Karki', subject: 'Advanced Calculus', duration: '1 Hour', fee: 1500, time: 'Tomorrow @ 11:00 AM' },
@@ -166,10 +168,10 @@ const TutorDashboard: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 w-full md:w-auto">
                     <button 
-                      onClick={() => alert('Launching WebRTC Classroom for Aayush Tamang...')}
-                      className="flex-1 md:flex-none px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-sm"
+                      onClick={() => navigate('/classroom/session-aayush')}
+                      className="flex-1 md:flex-none px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all hover:scale-105"
                     >
-                      <Video className="h-3.5 w-3.5" /> Launch Room
+                      <Video className="h-3.5 w-3.5" /> Launch Classroom
                     </button>
                   </div>
                 </div>
@@ -187,10 +189,10 @@ const TutorDashboard: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 w-full md:w-auto">
                     <button 
-                      onClick={() => alert('Launching WebRTC Classroom for Priya Maharjan...')}
-                      className="flex-1 md:flex-none px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-sm"
+                      onClick={() => navigate('/classroom/session-priya')}
+                      className="flex-1 md:flex-none px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all hover:scale-105"
                     >
-                      <Video className="h-3.5 w-3.5" /> Launch Room
+                      <Video className="h-3.5 w-3.5" /> Launch Classroom
                     </button>
                   </div>
                 </div>

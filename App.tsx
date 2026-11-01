@@ -7,13 +7,14 @@ import StudentDashboard from './pages/StudentDashboard';
 import TutorDashboard from './pages/TutorDashboard';
 import Documentation from './pages/Documentation';
 import Welcome from './pages/Welcome';
+import Classroom from './pages/Classroom';
 import { AppProvider } from './context/AppContext';
 
 // Wrapper to conditionally render Navbar
 const AppContent: React.FC = () => {
   const location = useLocation();
-  // Hide Navbar on the Welcome screen (root path)
-  const showNavbar = location.pathname !== '/';
+  // Hide Navbar on the Welcome screen (root path) and inside live Classroom
+  const showNavbar = location.pathname !== '/' && !location.pathname.startsWith('/classroom');
 
   return (
     <>
@@ -25,6 +26,7 @@ const AppContent: React.FC = () => {
           <Route path="/tutor/:id" element={<TutorProfile />} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />
           <Route path="/tutor-dashboard" element={<TutorDashboard />} />
+          <Route path="/classroom/:sessionId" element={<Classroom />} />
           <Route path="/documentation" element={<Documentation />} />
         </Routes>
       </main>

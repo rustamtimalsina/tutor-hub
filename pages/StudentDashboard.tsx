@@ -168,10 +168,10 @@ const StudentDashboard: React.FC = () => {
 
                       <div className="mt-6 pt-4 border-t border-slate-100 flex gap-2">
                         <button 
-                          onClick={() => alert(`Starting Live Classroom for ${session.subject} with ${session.tutorName}...`)}
-                          className="flex-1 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all"
+                          onClick={() => navigate(`/classroom/${session.id}`)}
+                          className="flex-1 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all hover:scale-[1.02]"
                         >
-                          <Video className="h-4 w-4" /> Join Room
+                          <Video className="h-4 w-4" /> Join Live Classroom
                         </button>
                         <button
                           onClick={() => cancelSession(session.id)}
