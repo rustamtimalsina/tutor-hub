@@ -354,9 +354,24 @@ const Classroom: React.FC = () => {
         </div>
 
         {/* Live Session Timer */}
-        <div className="bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-full flex items-center gap-2 text-xs font-mono font-bold text-emerald-400 shadow-inner">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-          <span>{formatTimer(secondsElapsed)}</span>
+        <div className="flex items-center gap-3">
+          <div className="bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-full flex items-center gap-2 text-xs font-mono font-bold text-emerald-400 shadow-inner">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+            <span>{formatTimer(secondsElapsed)}</span>
+          </div>
+
+          {/* Quick AI Toggle in Header */}
+          <button
+            onClick={() => setActiveTab('ai')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
+              activeTab === 'ai'
+                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-lg shadow-amber-500/30 scale-105'
+                : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
+            }`}
+          >
+            <Bot className="h-4 w-4 text-amber-400" />
+            <span>AI Copilot ✨</span>
+          </button>
         </div>
 
         {/* Actions */}
