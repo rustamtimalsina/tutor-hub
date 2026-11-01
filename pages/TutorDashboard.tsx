@@ -1,8 +1,18 @@
-import React from 'react';
-import { Calendar, DollarSign, MessageSquare, Edit2, User, Clock, CheckCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, DollarSign, MessageSquare, Edit2, User, Clock, CheckCircle, Video, TrendingUp, Sparkles } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useApp } from '../context/AppContext';
+import confetti from 'canvas-confetti';
 
 const TutorDashboard: React.FC = () => {
+  const { sessions } = useApp();
+  const [pendingRequests, setPendingRequests] = useState([
+    { id: 'req-1', student: 'Sita Karki', subject: 'Advanced Calculus', duration: '1 Hour', fee: 1500, time: 'Tomorrow @ 11:00 AM' },
+    { id: 'req-2', student: 'Bikram Thapa', subject: 'Quantum Physics', duration: '2 Hours', fee: 3000, time: 'Wednesday @ 3:00 PM' },
+  ]);
+
+  const [notification, setNotification] = useState<string | null>(null);
+
   const chartData = [
     { name: 'Mon', earnings: 1500 },
     { name: 'Tue', earnings: 3000 },
@@ -13,178 +23,278 @@ const TutorDashboard: React.FC = () => {
     { name: 'Sun', earnings: 3000 },
   ];
 
-  // Mock messages for the messaging section
   const messages = [
-     { id: 1, student: 'Aayush Tamang', text: 'Hi sir, can we focus on Calculus in the next session?', time: '2 mins ago', unread: true },
-     { id: 2, student: 'Priya Maharjan', text: 'Thanks for the notes! They were really helpful.', time: '1 hour ago', unread: false },
+    { id: 1, student: 'Aayush Tamang', text: 'Hi sir, can we focus on Calculus in the next session?', time: '2 mins ago', unread: true },
+    { id: 2, student: 'Priya Maharjan', text: 'Thanks for the notes! They were really helpful.', time: '1 hour ago', unread: false },
   ];
 
+  const handleAcceptRequest = (id: string, name: string) => {
+    setPendingRequests((prev) => prev.filter((r) => r.id !== id));
+    setNotification(`Accepted request from ${name}! Booking has been confirmed.`);
+    try {
+      confetti({ particleCount: 50, spread: 60, origin: { y: 0.5 } });
+    } catch {}
+    setTimeout(() => setNotification(null), 4000);
+  };
+
+  const handleDeclineRequest = (id: string) => {
+    setPendingRequests((prev) => prev.filter((r) => r.id !== id));
+    setNotification('Request declined.');
+    setTimeout(() => setNotification(null), 3000);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-       
-       {/* Tutor Dashboard Header */}
-      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6 mb-8">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-           <div className="flex items-center gap-4">
-              <img src="https://picsum.photos/seed/rajesh/200/200" alt="Rajesh Sharma" className="h-16 w-16 rounded-full object-cover border-2 border-primary-100" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Rajesh Sharma</h1>
-                <p className="text-gray-500 text-sm flex items-center gap-2">
-                  <span className="bg-primary-100 text-primary-800 px-2 py-0.5 rounded text-xs uppercase tracking-wide font-semibold">Tutor</span>
-                  <span className="text-gray-400">•</span>
-                  <span>Mathematics, Physics</span>
-                </p>
+    <div className="min-h-screen bg-slate-50 pb-16">
+      
+      {/* Toast Notification Banner */}
+      {notification && (
+        <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-bold animate-bounce">
+          <Sparkles className="h-4 w-4 text-amber-400" />
+          <span>{notification}</span>
+        </div>
+      )}
+
+      {/* Tutor Dashboard Header */}
+      <div className="bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-8 mb-8 shadow-sm">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-5">
+            <div className="relative">
+              <img
+                src="https://picsum.photos/seed/rajesh/200/200"
+                alt="Rajesh Sharma"
+                className="h-20 w-20 rounded-2xl object-cover border-2 border-primary-200 shadow-md ring-2 ring-primary-50"
+              />
+              <span className="absolute -bottom-1 -right-1 px-2 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-full uppercase tracking-wider">
+                Online
+              </span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Rajesh Sharma</h1>
+                <span className="bg-primary-50 text-primary-700 text-xs px-2.5 py-0.5 rounded-full font-bold border border-primary-200">
+                  Verified Educator
+                </span>
               </div>
-           </div>
-           <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors text-gray-700">
-             <Edit2 className="h-4 w-4" />
-             Edit Profile
-           </button>
+              <p className="text-slate-500 text-xs sm:text-sm mt-1 font-medium">
+                Senior Mathematics & Physics Specialist • M.Sc. Tribhuvan University
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => alert('Profile settings: You are already in Verified Master Tier.')}
+              className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold transition-colors text-slate-700 shadow-sm"
+            >
+              <Edit2 className="h-4 w-4" />
+              Tutor Profile Settings
+            </button>
+          </div>
         </div>
       </div>
 
-       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-         
-         {/* Stats Row */}
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start justify-between">
-               <div>
-                  <p className="text-sm font-medium text-gray-500">Upcoming Sessions</p>
-                  <p className="text-3xl font-bold text-primary-900 mt-2">2</p>
-               </div>
-               <div className="p-3 bg-primary-50 rounded-lg text-primary-600">
-                  <Calendar className="h-6 w-6" />
-               </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Stats Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200/80 flex items-start justify-between">
+            <div>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Bookings</span>
+              <p className="text-3xl font-black text-slate-900 mt-2">{sessions.length + 2}</p>
+              <span className="text-[11px] text-emerald-600 font-bold mt-1 inline-flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" /> +18% this month
+              </span>
             </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start justify-between">
-               <div>
-                  <p className="text-sm font-medium text-gray-500">Total Earnings</p>
-                  <p className="text-3xl font-bold text-primary-900 mt-2">NPR 8250</p>
-               </div>
-               <div className="p-3 bg-green-50 rounded-lg text-green-600">
-                  <DollarSign className="h-6 w-6" />
-               </div>
+            <div className="p-3 bg-primary-50 rounded-2xl text-primary-600">
+              <Calendar className="h-6 w-6" />
             </div>
+          </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start justify-between">
-               <div>
-                  <p className="text-sm font-medium text-gray-500">Average Rating</p>
-                  <p className="text-3xl font-bold text-primary-900 mt-2">4.8</p>
-               </div>
-               <div className="p-3 bg-yellow-50 rounded-lg text-yellow-600">
-                  <User className="h-6 w-6" />
-               </div>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200/80 flex items-start justify-between">
+            <div>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Earnings</span>
+              <p className="text-3xl font-black text-slate-900 mt-2">NPR 28,500</p>
+              <span className="text-[11px] text-emerald-600 font-bold mt-1 inline-flex items-center gap-1">
+                <TrendingUp className="h-3 w-3" /> Next payout in 2 days
+              </span>
             </div>
-         </div>
+            <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600">
+              <DollarSign className="h-6 w-6" />
+            </div>
+          </div>
 
-         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-             
-             {/* Left Column: Schedule & Earnings */}
-             <div className="lg:col-span-2 space-y-8">
-                {/* Upcoming Sessions */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-primary-900">Upcoming Sessions</h2>
-                        <button className="text-sm text-primary-600 font-medium hover:underline">View Schedule</button>
-                    </div>
-                    <div className="space-y-4">
-                    {/* Card 1 */}
-                    <div className="border border-primary-100 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center hover:bg-primary-50 transition-colors">
-                        <div className="mb-4 md:mb-0">
-                            <h3 className="font-bold text-lg text-gray-900">Aayush Tamang</h3>
-                            <span className="bg-primary-100 text-primary-800 text-xs px-2 py-0.5 rounded">Mathematics</span>
-                            <div className="mt-2 text-sm text-gray-500 flex items-center gap-4">
-                                <span>📅 12/25/2025</span>
-                                <span>⏰ 10:00 AM (1 hour)</span>
-                            </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                             <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-medium">Upcoming</span>
-                             <button className="text-sm text-gray-500 hover:text-primary-600 underline">Message</button>
-                        </div>
-                    </div>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200/80 flex items-start justify-between">
+            <div>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Student Rating</span>
+              <p className="text-3xl font-black text-slate-900 mt-2">4.9 / 5.0</p>
+              <span className="text-[11px] text-amber-600 font-bold mt-1 inline-block">
+                Top Rated Educator 🏆
+              </span>
+            </div>
+            <div className="p-3 bg-amber-50 rounded-2xl text-amber-600">
+              <User className="h-6 w-6" />
+            </div>
+          </div>
+        </div>
 
-                    {/* Card 2 */}
-                    <div className="border border-primary-100 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center hover:bg-primary-50 transition-colors">
-                        <div className="mb-4 md:mb-0">
-                            <h3 className="font-bold text-lg text-gray-900">Priya Maharjan</h3>
-                            <span className="bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded">Physics</span>
-                            <div className="mt-2 text-sm text-gray-500 flex items-center gap-4">
-                                <span>📅 12/26/2025</span>
-                                <span>⏰ 2:00 PM (1.5 hours)</span>
-                            </div>
-                        </div>
-                         <div className="flex flex-col items-end gap-2">
-                             <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-medium">Upcoming</span>
-                             <button className="text-sm text-gray-500 hover:text-primary-600 underline">Message</button>
-                        </div>
+        {/* Main Columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          
+          {/* Left Column: Schedule & Analytics */}
+          <div className="lg:col-span-2 space-y-8">
+            
+            {/* Upcoming Sessions List */}
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 tracking-tight">Confirmed Schedule</h2>
+                  <p className="text-xs text-slate-400 font-medium">Upcoming 1-on-1 student classroom sessions</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="border border-slate-200/80 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center hover:border-primary-200 transition-colors gap-4">
+                  <div>
+                    <span className="bg-primary-50 text-primary-700 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                      Mathematics
+                    </span>
+                    <h3 className="font-bold text-base text-slate-900 mt-1">Aayush Tamang</h3>
+                    <div className="mt-1 text-xs text-slate-500 flex items-center gap-3">
+                      <span>📅 Tomorrow @ 10:00 AM</span>
+                      <span>• 1 Hour (NPR 1,500)</span>
                     </div>
-                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 w-full md:w-auto">
+                    <button 
+                      onClick={() => alert('Launching WebRTC Classroom for Aayush Tamang...')}
+                      className="flex-1 md:flex-none px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      <Video className="h-3.5 w-3.5" /> Launch Room
+                    </button>
+                  </div>
                 </div>
 
-                {/* Earnings Chart */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <h2 className="text-xl font-bold text-primary-900 mb-6">Weekly Earnings</h2>
-                    <div className="h-64 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData}>
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                        <YAxis axisLine={false} tickLine={false} />
-                        <Tooltip cursor={{fill: '#f5f3ff'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
-                        <Bar dataKey="earnings" fill="#7c3aed" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div className="border border-slate-200/80 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center hover:border-primary-200 transition-colors gap-4">
+                  <div>
+                    <span className="bg-indigo-50 text-indigo-700 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                      Physics
+                    </span>
+                    <h3 className="font-bold text-base text-slate-900 mt-1">Priya Maharjan</h3>
+                    <div className="mt-1 text-xs text-slate-500 flex items-center gap-3">
+                      <span>📅 Thursday @ 2:00 PM</span>
+                      <span>• 1.5 Hours (NPR 2,250)</span>
                     </div>
+                  </div>
+                  <div className="flex items-center gap-2 w-full md:w-auto">
+                    <button 
+                      onClick={() => alert('Launching WebRTC Classroom for Priya Maharjan...')}
+                      className="flex-1 md:flex-none px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      <Video className="h-3.5 w-3.5" /> Launch Room
+                    </button>
+                  </div>
                 </div>
-             </div>
+              </div>
+            </div>
 
-             {/* Right Column: Messages & Requests */}
-             <div className="lg:col-span-1 space-y-8">
-                 
-                 {/* Student Messaging */}
-                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-bold text-gray-900">Student Messages</h2>
-                        <MessageSquare className="h-5 w-5 text-gray-400" />
-                    </div>
-                    
-                    <div className="space-y-4">
-                       {messages.map(msg => (
-                          <div key={msg.id} className={`p-3 rounded-lg border ${msg.unread ? 'bg-primary-50 border-primary-100' : 'bg-white border-gray-100'} hover:shadow-sm cursor-pointer transition-shadow`}>
-                             <div className="flex justify-between items-start mb-1">
-                                <span className={`font-bold text-sm ${msg.unread ? 'text-primary-900' : 'text-gray-900'}`}>{msg.student}</span>
-                                <span className="text-xs text-gray-400">{msg.time}</span>
-                             </div>
-                             <p className="text-xs text-gray-600 line-clamp-2">{msg.text}</p>
-                          </div>
-                       ))}
-                    </div>
-                    <button className="w-full mt-4 text-center text-sm text-primary-600 font-medium hover:text-primary-700 py-2 border border-dashed border-primary-200 rounded-lg hover:bg-primary-50">View All Messages</button>
-                 </div>
+            {/* Weekly Earnings Chart */}
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 tracking-tight">Weekly Performance Chart</h2>
+                  <p className="text-xs text-slate-400 font-medium">Session revenues recorded in NPR</p>
+                </div>
+              </div>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                    <Tooltip
+                      cursor={{ fill: '#f1f5f9' }}
+                      contentStyle={{ borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 8px 30px rgba(0,0,0,0.06)' }}
+                    />
+                    <Bar dataKey="earnings" fill="#7c3aed" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
-                 {/* Session Requests (Mini) */}
-                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4">Pending Requests</h2>
-                    <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-100">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center text-yellow-700 font-bold text-xs">S</div>
-                            <div>
-                                <p className="text-sm font-bold text-gray-900">Sita K.</p>
-                                <p className="text-xs text-gray-500">Calculus • 1 Hour</p>
-                            </div>
+          </div>
+
+          {/* Right Column: Pending Requests & Messages */}
+          <div className="lg:col-span-1 space-y-8">
+            
+            {/* Pending Booking Requests */}
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-slate-900 text-base">Pending Student Inquiries ({pendingRequests.length})</h3>
+                <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">New</span>
+              </div>
+
+              {pendingRequests.length > 0 ? (
+                <div className="space-y-3">
+                  {pendingRequests.map((req) => (
+                    <div key={req.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-black text-slate-900 text-sm">{req.student}</h4>
+                          <span className="text-xs text-primary-700 font-semibold">{req.subject}</span>
                         </div>
-                        <div className="flex gap-2 mt-3">
-                            <button className="flex-1 bg-white border border-gray-200 text-gray-700 text-xs font-bold py-1.5 rounded shadow-sm hover:bg-gray-50">Decline</button>
-                            <button className="flex-1 bg-primary-600 text-white text-xs font-bold py-1.5 rounded shadow-sm hover:bg-primary-700">Accept</button>
-                        </div>
+                        <span className="text-xs font-black text-emerald-600">NPR {req.fee}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium">{req.time} • {req.duration}</p>
+                      
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          onClick={() => handleDeclineRequest(req.id)}
+                          className="flex-1 py-1.5 bg-white border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-600 rounded-xl text-xs font-bold transition-colors"
+                        >
+                          Decline
+                        </button>
+                        <button
+                          onClick={() => handleAcceptRequest(req.id, req.student)}
+                          className="flex-1 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                        >
+                          Accept
+                        </button>
+                      </div>
                     </div>
-                 </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-xs text-slate-400">
+                  <CheckCircle className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
+                  All student booking requests have been reviewed!
+                </div>
+              )}
+            </div>
 
-             </div>
-         </div>
+            {/* Direct Messages */}
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-slate-900 text-base">Student Direct Messages</h3>
+                <MessageSquare className="h-4 w-4 text-slate-400" />
+              </div>
 
-       </div>
+              <div className="space-y-3">
+                {messages.map((msg) => (
+                  <div key={msg.id} className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-100 transition-colors cursor-pointer">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-bold text-xs text-slate-900">{msg.student}</span>
+                      <span className="text-[10px] text-slate-400 font-medium">{msg.time}</span>
+                    </div>
+                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{msg.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
     </div>
   );
 };
