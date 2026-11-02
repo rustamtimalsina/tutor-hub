@@ -65,45 +65,52 @@ const AIAssistantWidget: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
       
       {/* Floating Trigger Button */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
-          className="group relative flex items-center gap-3 px-5 py-3.5 bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-600 text-white rounded-full shadow-2xl shadow-primary-500/40 hover:shadow-primary-500/60 hover:scale-105 transition-all border border-white/20"
+          onClick={() => {
+            sounds.playClick();
+            setIsOpen(true);
+          }}
+          className="group relative flex items-center gap-2.5 sm:gap-3 px-4 py-3 sm:px-5 sm:py-3.5 bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-600 text-white rounded-full shadow-2xl shadow-primary-500/40 hover:shadow-primary-500/60 hover:scale-105 transition-all border border-white/20"
         >
-          <div className="p-1.5 bg-white/20 rounded-full">
+          <div className="p-1 sm:p-1.5 bg-white/20 rounded-full">
             <Bot className="h-5 w-5 text-amber-300 animate-pulse" />
           </div>
           <div className="text-left hidden sm:block">
             <span className="block text-xs font-black uppercase tracking-wider text-amber-300">Tutor AI Copilot</span>
             <span className="text-[11px] text-slate-200">Ask anything or match tutors</span>
           </div>
+          <span className="block sm:hidden text-xs font-bold text-white pr-1">AI Copilot</span>
           <span className="h-3 w-3 rounded-full bg-emerald-400 absolute -top-1 -right-1 ring-2 ring-white" />
         </button>
       )}
 
-      {/* Slide-Up AI Drawer */}
+      {/* Slide-Up AI Drawer with 100% Mobile Viewport Protection */}
       {isOpen && (
-        <div className="bg-slate-950 text-white rounded-3xl w-[360px] sm:w-[420px] h-[540px] shadow-2xl border border-slate-800 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="bg-slate-950 text-white rounded-3xl w-[calc(100vw-2rem)] max-w-[420px] h-[520px] max-h-[85vh] shadow-2xl border border-slate-800 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
           
           {/* Header */}
-          <div className="bg-gradient-to-r from-primary-900 via-indigo-950 to-slate-950 px-5 py-4 border-b border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="bg-gradient-to-r from-primary-900 via-indigo-950 to-slate-950 px-4 sm:px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
               <div className="p-2 bg-gradient-to-tr from-amber-400 to-primary-600 rounded-2xl text-slate-950 shadow-md">
-                <Bot className="h-5 w-5" />
+                <Bot className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
               <div>
-                <h3 className="font-black text-sm text-white flex items-center gap-1.5">
+                <h3 className="font-black text-xs sm:text-sm text-white flex items-center gap-1.5">
                   Tutor Hub AI Copilot
                   <span className="bg-amber-400/20 text-amber-300 text-[9px] px-1.5 py-0.5 rounded font-black uppercase">GPT</span>
                 </h3>
-                <p className="text-[11px] text-slate-400">Available 24/7 across the platform</p>
+                <p className="text-[10px] sm:text-[11px] text-slate-400">Available 24/7 across the platform</p>
               </div>
             </div>
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                sounds.playClick();
+                setIsOpen(false);
+              }}
               className="text-slate-400 hover:text-white p-1 rounded-xl hover:bg-slate-800 transition-colors"
             >
               <X className="h-5 w-5" />
@@ -111,9 +118,9 @@ const AIAssistantWidget: React.FC = () => {
           </div>
 
           {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 text-xs">
+          <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3 text-xs">
             {/* Quick Actions */}
-            <div className="space-y-2 bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800">
+            <div className="space-y-1.5 bg-slate-900/90 p-3 rounded-2xl border border-slate-800">
               <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
                 <Sparkles className="h-3 w-3" /> Quick Launch & Inquiries
               </span>
@@ -150,7 +157,7 @@ const AIAssistantWidget: React.FC = () => {
                 className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div
-                  className={`p-3 rounded-2xl max-w-[88%] leading-relaxed ${
+                  className={`p-3 rounded-2xl max-w-[90%] leading-relaxed ${
                     m.role === 'user'
                       ? 'bg-primary-600 text-white rounded-tr-none font-medium'
                       : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none shadow-md'

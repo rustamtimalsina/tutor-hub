@@ -4,7 +4,7 @@ import {
   Mic, MicOff, Video, VideoOff, ScreenShare, PhoneOff, 
   PenTool, Eraser, RotateCcw, Download, MessageSquare, 
   FileText, Users, Sparkles, Send, CheckCircle2, Sliders,
-  Bot, HelpCircle, Lightbulb, Compass, Play
+  Bot, HelpCircle, Lightbulb, Compass, Play, Layout, MessageCircle
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import confetti from 'canvas-confetti';
@@ -36,6 +36,9 @@ const Classroom: React.FC = () => {
     price: 1500,
     status: 'Upcoming' as const,
   };
+
+  // Mobile View Switcher (canvas vs sidebar)
+  const [mobileTab, setMobileTab] = useState<'canvas' | 'chat'>('canvas');
 
   // Video & Audio Controls
   const [micOn, setMicOn] = useState(true);
@@ -114,7 +117,6 @@ const Classroom: React.FC = () => {
           userVideoRef.current.srcObject = stream;
         }
       } catch (err) {
-        // Fallback to avatar mode
         setVideoOn(true);
         setHasWebcam(false);
       }
@@ -183,7 +185,7 @@ const Classroom: React.FC = () => {
     ctx.lineJoin = 'round';
 
     drawGrid(ctx, rect.width, rect.height);
-  }, [drawGrid]);
+  }, [drawGrid, mobileTab]);
 
   const getCoordinates = (e: React.PointerEvent<HTMLCanvasElement>): Point | null => {
     const canvas = canvasRef.current;
@@ -254,6 +256,7 @@ const Classroom: React.FC = () => {
   };
 
   const clearCanvas = () => {
+    sounds.playPop();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -263,6 +266,7 @@ const Classroom: React.FC = () => {
   };
 
   const downloadCanvas = () => {
+    sounds.playClick();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const url = canvas.toDataURL('image/png');
@@ -283,7 +287,6 @@ const Classroom: React.FC = () => {
     setInputText('');
   };
 
-  // AI Copilot Generator
   const handleAskAI = (promptText?: string) => {
     const query = promptText || aiInput;
     if (!query.trim()) return;
@@ -346,70 +349,105 @@ const Classroom: React.FC = () => {
   return (
     <div className="h-screen flex flex-col bg-slate-900 text-white overflow-hidden select-none">
       
-      {/* Top Header Bar */}
-      <header className="h-16 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-6 flex items-center justify-between z-30">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-tr from-primary-600 to-indigo-600 rounded-xl shadow-md shadow-primary-500/20">
-            <Video className="h-5 w-5 text-white" />
+      {/* Top Header Bar (Fully Mobile Responsive) */}
+      <header className="h-14 sm:h-16 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 px-3 sm:px-6 flex items-center justify-between z-30 flex-shrink-0">
+        
+        {/* Title */}
+        <div className="flex items-center gap-2 sm:gap-3 truncate">
+          <div className="p-1.5 sm:p-2 bg-gradient-to-tr from-primary-600 to-indigo-600 rounded-xl shadow-md flex-shrink-0">
+            <Video className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
-          <div>
-            <h1 className="font-black text-sm text-white flex items-center gap-2">
-              {session.subject} Classroom
-              <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold">
+          <div className="truncate">
+            <h1 className="font-black text-xs sm:text-sm text-white flex items-center gap-1.5 truncate">
+              <span className="truncate">{session.subject}</span>
+              <span className="hidden sm:inline-block bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold">
                 Live HD
               </span>
             </h1>
-            <p className="text-xs text-slate-400 font-medium">Mentor: {session.tutorName}</p>
+            <p className="text-[10px] sm:text-xs text-slate-400 truncate hidden xs:block">Mentor: {session.tutorName}</p>
           </div>
         </div>
 
-        {/* Live Session Timer */}
-        <div className="flex items-center gap-3">
-          <div className="bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-full flex items-center gap-2 text-xs font-mono font-bold text-emerald-400 shadow-inner">
+        {/* Center: Live Timer & AI Pill */}
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          <div className="bg-slate-900 border border-slate-800 px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full flex items-center gap-1.5 text-[11px] sm:text-xs font-mono font-bold text-emerald-400 shadow-inner">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
             <span>{formatTimer(secondsElapsed)}</span>
           </div>
 
-          {/* Quick AI Toggle in Header */}
           <button
-            onClick={() => setActiveTab('ai')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border ${
+            onClick={() => {
+              sounds.playClick();
+              setActiveTab('ai');
+              setMobileTab('chat');
+            }}
+            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition-all border ${
               activeTab === 'ai'
-                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-lg shadow-amber-500/30 scale-105'
+                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-md scale-105'
                 : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
             }`}
           >
-            <Bot className="h-4 w-4 text-amber-400" />
-            <span>AI Copilot ✨</span>
+            <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">AI Copilot ✨</span>
           </button>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           <button
             onClick={downloadCanvas}
-            className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-colors"
+            className="p-2 sm:px-3.5 sm:py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-colors"
             title="Download Whiteboard"
           >
-            <Download className="h-4 w-4" /> Save Notes
+            <Download className="h-4 w-4" />
+            <span className="hidden md:inline ml-1.5">Save Notes</span>
           </button>
           <button
             onClick={handleEndSession}
-            className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black shadow-lg shadow-rose-600/30 transition-all hover:scale-105"
+            className="flex items-center gap-1 px-3 py-1.5 sm:px-4 sm:py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black shadow-lg shadow-rose-600/30 transition-all hover:scale-105"
           >
-            <PhoneOff className="h-4 w-4" /> End Call
+            <PhoneOff className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">End Call</span>
           </button>
         </div>
       </header>
 
+      {/* Mobile Mode Switcher Bar (< md only) */}
+      <div className="md:hidden bg-slate-950 border-b border-slate-800 px-3 py-1.5 flex gap-2 flex-shrink-0">
+        <button
+          onClick={() => {
+            sounds.playClick();
+            setMobileTab('canvas');
+          }}
+          className={`flex-1 py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === 'canvas' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Layout className="h-3.5 w-3.5" /> Whiteboard & Call
+        </button>
+        <button
+          onClick={() => {
+            sounds.playClick();
+            setMobileTab('chat');
+          }}
+          className={`flex-1 py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+            mobileTab === 'chat' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <MessageCircle className="h-3.5 w-3.5" /> Chat & AI {activeTab === 'ai' ? '✨' : ''}
+        </button>
+      </div>
+
       {/* Main Workspace */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         
         {/* Left: Video Feeds & Canvas */}
-        <div className="flex-1 flex flex-col p-4 gap-4 overflow-hidden">
+        <div className={`flex-1 flex flex-col p-2 sm:p-4 gap-2 sm:gap-4 overflow-hidden ${
+          mobileTab === 'chat' ? 'hidden md:flex' : 'flex'
+        }`}>
           
           {/* Video Feeds Grid */}
-          <div className="h-44 grid grid-cols-2 gap-4">
+          <div className="h-28 sm:h-40 grid grid-cols-2 gap-2 sm:gap-4 flex-shrink-0">
             
             {/* Tutor Video */}
             <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden relative shadow-lg">
@@ -418,18 +456,18 @@ const Classroom: React.FC = () => {
                 alt="Tutor Feed"
                 className="w-full h-full object-cover"
               />
-              <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-white flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                {session.tutorName} (Tutor)
+              <div className="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-md px-2 py-0.5 sm:px-3 sm:py-1 rounded-xl text-[10px] sm:text-xs font-bold text-white flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="truncate">{session.tutorName}</span>
               </div>
               {reaction && (
-                <div className="absolute top-4 right-4 text-4xl animate-bounce">
+                <div className="absolute top-2 right-2 text-3xl animate-bounce">
                   {reaction}
                 </div>
               )}
             </div>
 
-            {/* Student Video (Real Camera or Avatar) */}
+            {/* Student Video */}
             <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden relative shadow-lg flex items-center justify-center">
               {hasWebcam && videoOn ? (
                 <video
@@ -440,79 +478,85 @@ const Classroom: React.FC = () => {
                   className="w-full h-full object-cover scale-x-[-1]"
                 />
               ) : videoOn ? (
-                <div className="w-full h-full bg-gradient-to-tr from-slate-900 to-indigo-950 flex flex-col items-center justify-center text-center p-4">
-                  <div className="h-16 w-16 rounded-full bg-primary-600 flex items-center justify-center text-2xl font-black text-white shadow-lg mb-2">
+                <div className="w-full h-full bg-gradient-to-tr from-slate-900 to-indigo-950 flex flex-col items-center justify-center text-center p-2">
+                  <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-full bg-primary-600 flex items-center justify-center text-lg sm:text-2xl font-black text-white shadow-lg mb-1">
                     A
                   </div>
-                  <span className="text-xs font-bold text-slate-300">Alex Johnson (You)</span>
-                  <span className="text-[10px] text-slate-400 mt-1">Camera enabled</span>
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-300">You</span>
                 </div>
               ) : (
-                <div className="text-center text-slate-500 text-xs">
-                  <VideoOff className="h-8 w-8 mx-auto mb-1 text-slate-600" />
-                  Camera is turned off
+                <div className="text-center text-slate-500 text-[10px] sm:text-xs">
+                  <VideoOff className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1 text-slate-600" />
+                  Camera off
                 </div>
               )}
-              <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-white flex items-center gap-2">
-                <span className={`h-2 w-2 rounded-full ${micOn ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+              <div className="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-md px-2 py-0.5 sm:px-3 sm:py-1 rounded-xl text-[10px] sm:text-xs font-bold text-white flex items-center gap-1.5">
+                <span className={`h-1.5 w-1.5 rounded-full ${micOn ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                 You {micOn ? '' : '(Muted)'}
               </div>
             </div>
           </div>
 
           {/* Whiteboard Canvas Container */}
-          <div className="flex-1 bg-white rounded-3xl overflow-hidden relative border border-slate-800 shadow-2xl flex flex-col">
+          <div className="flex-1 bg-white rounded-2xl sm:rounded-3xl overflow-hidden relative border border-slate-800 shadow-2xl flex flex-col min-h-0">
             
-            {/* Whiteboard Floating Toolbar */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-700/80 shadow-2xl flex items-center gap-3">
+            {/* Whiteboard Floating Toolbar (Scrollable on small mobile) */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-slate-700/80 shadow-2xl flex items-center gap-2 max-w-[95vw] overflow-x-auto no-scrollbar">
               
               {/* Palette */}
-              <div className="flex items-center gap-1.5 pr-3 border-r border-slate-700">
+              <div className="flex items-center gap-1.5 pr-2 border-r border-slate-700 flex-shrink-0">
                 {['#7c3aed', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#0f172a'].map((c) => (
                   <button
                     key={c}
                     onClick={() => {
+                      sounds.playClick();
                       setPenColor(c);
                       setIsEraser(false);
                     }}
                     style={{ backgroundColor: c }}
-                    className={`h-5 w-5 rounded-full transition-transform ${
-                      penColor === c && !isEraser ? 'scale-125 ring-2 ring-white ring-offset-2 ring-offset-slate-900' : 'hover:scale-110'
+                    className={`h-4 w-4 sm:h-5 sm:w-5 rounded-full transition-transform flex-shrink-0 ${
+                      penColor === c && !isEraser ? 'scale-125 ring-2 ring-white' : 'hover:scale-110'
                     }`}
                   />
                 ))}
               </div>
 
               {/* Tools */}
-              <div className="flex items-center gap-2 pr-3 border-r border-slate-700">
+              <div className="flex items-center gap-1.5 pr-2 border-r border-slate-700 flex-shrink-0">
                 <button
-                  onClick={() => setIsEraser(false)}
-                  className={`p-2 rounded-xl transition-colors ${
-                    !isEraser ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  onClick={() => {
+                    sounds.playClick();
+                    setIsEraser(false);
+                  }}
+                  className={`p-1.5 rounded-xl transition-colors ${
+                    !isEraser ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
                   }`}
                   title="Draw Pen"
                 >
-                  <PenTool className="h-4 w-4" />
+                  <PenTool className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  onClick={() => setIsEraser(true)}
-                  className={`p-2 rounded-xl transition-colors ${
-                    isEraser ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  onClick={() => {
+                    sounds.playClick();
+                    setIsEraser(true);
+                  }}
+                  className={`p-1.5 rounded-xl transition-colors ${
+                    isEraser ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
                   }`}
                   title="Eraser"
                 >
-                  <Eraser className="h-4 w-4" />
+                  <Eraser className="h-3.5 w-3.5" />
                 </button>
                 <div className="relative">
                   <button
                     onClick={() => setShowThickness(!showThickness)}
-                    className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                    className="p-1.5 rounded-xl text-slate-400 hover:text-white transition-colors"
                     title="Stroke Width"
                   >
-                    <Sliders className="h-4 w-4" />
+                    <Sliders className="h-3.5 w-3.5" />
                   </button>
                   {showThickness && (
-                    <div className="absolute top-12 -left-6 bg-slate-900 border border-slate-700 p-3 rounded-2xl shadow-xl w-36 z-30">
+                    <div className="absolute top-10 -left-6 bg-slate-900 border border-slate-700 p-3 rounded-2xl shadow-xl w-36 z-30">
                       <span className="text-[10px] text-slate-400 font-bold block mb-1">Thickness: {penWidth}px</span>
                       <input 
                         type="range" 
@@ -527,20 +571,20 @@ const Classroom: React.FC = () => {
                 </div>
                 <button
                   onClick={clearCanvas}
-                  className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-rose-400 transition-colors"
                   title="Clear Whiteboard"
                 >
-                  <RotateCcw className="h-4 w-4" />
+                  <RotateCcw className="h-3.5 w-3.5" />
                 </button>
               </div>
 
               {/* Quick Reactions */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5 flex-shrink-0">
                 {['👍', '💡', '🔥', '👏'].map((emoji) => (
                   <button
                     key={emoji}
                     onClick={() => triggerReaction(emoji)}
-                    className="p-1 hover:scale-125 transition-transform text-sm"
+                    className="p-1 hover:scale-125 transition-transform text-xs sm:text-sm"
                   >
                     {emoji}
                   </button>
@@ -549,7 +593,7 @@ const Classroom: React.FC = () => {
 
             </div>
 
-            {/* High-DPI Smooth HTML5 Canvas */}
+            {/* High-DPI Smooth Canvas */}
             <canvas
               ref={canvasRef}
               onPointerDown={handlePointerDown}
@@ -560,48 +604,53 @@ const Classroom: React.FC = () => {
           </div>
 
           {/* Bottom Call Controls */}
-          <div className="h-16 bg-slate-950/80 backdrop-blur-md rounded-2xl border border-slate-800 px-6 flex items-center justify-center gap-4">
+          <div className="h-14 sm:h-16 bg-slate-950/80 backdrop-blur-md rounded-2xl border border-slate-800 px-4 flex items-center justify-center gap-3 sm:gap-4 flex-shrink-0">
             <button
               onClick={() => {
                 sounds.playToggle(!micOn);
                 setMicOn(!micOn);
               }}
-              className={`p-3 rounded-2xl transition-all ${
-                micOn ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
+              className={`p-2.5 sm:p-3 rounded-2xl transition-all ${
+                micOn ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-rose-600 text-white shadow-lg'
               }`}
               title={micOn ? 'Mute Mic' : 'Unmute Mic'}
             >
-              {micOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+              {micOn ? <Mic className="h-4 w-4 sm:h-5 sm:w-5" /> : <MicOff className="h-4 w-4 sm:h-5 sm:w-5" />}
             </button>
             <button
               onClick={toggleCamera}
-              className={`p-3 rounded-2xl transition-all ${
-                videoOn ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
+              className={`p-2.5 sm:p-3 rounded-2xl transition-all ${
+                videoOn ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-rose-600 text-white shadow-lg'
               }`}
               title={videoOn ? 'Turn Camera Off' : 'Turn Camera On'}
             >
-              {videoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+              {videoOn ? <Video className="h-4 w-4 sm:h-5 sm:w-5" /> : <VideoOff className="h-4 w-4 sm:h-5 sm:w-5" />}
             </button>
             <button
               onClick={toggleScreenShare}
-              className={`p-3 rounded-2xl transition-all ${
-                screenSharing ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30' : 'bg-slate-800 text-white hover:bg-slate-700'
+              className={`p-2.5 sm:p-3 rounded-2xl transition-all ${
+                screenSharing ? 'bg-primary-600 text-white shadow-lg' : 'bg-slate-800 text-white hover:bg-slate-700'
               }`}
               title="Share Screen"
             >
-              <ScreenShare className="h-5 w-5" />
+              <ScreenShare className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
           </div>
 
         </div>
 
         {/* Right Sidebar: Chat, Notes & AI Copilot */}
-        <aside className="w-80 sm:w-96 bg-slate-950 border-l border-slate-800 flex flex-col">
+        <aside className={`w-full md:w-80 lg:w-96 bg-slate-950 border-l border-slate-800 flex flex-col ${
+          mobileTab === 'canvas' ? 'hidden md:flex' : 'flex'
+        }`}>
           
           {/* Tabs */}
-          <div className="p-3 border-b border-slate-800 flex gap-1.5">
+          <div className="p-2 sm:p-3 border-b border-slate-800 flex gap-1.5 flex-shrink-0">
             <button
-              onClick={() => setActiveTab('chat')}
+              onClick={() => {
+                sounds.playClick();
+                setActiveTab('chat');
+              }}
               className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all ${
                 activeTab === 'chat' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
@@ -609,7 +658,10 @@ const Classroom: React.FC = () => {
               <MessageSquare className="h-3.5 w-3.5" /> Chat
             </button>
             <button
-              onClick={() => setActiveTab('notes')}
+              onClick={() => {
+                sounds.playClick();
+                setActiveTab('notes');
+              }}
               className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all ${
                 activeTab === 'notes' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
               }`}
@@ -617,7 +669,10 @@ const Classroom: React.FC = () => {
               <FileText className="h-3.5 w-3.5" /> Notes
             </button>
             <button
-              onClick={() => setActiveTab('ai')}
+              onClick={() => {
+                sounds.playClick();
+                setActiveTab('ai');
+              }}
               className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all ${
                 activeTab === 'ai' ? 'bg-gradient-to-r from-amber-500 to-primary-600 text-white shadow-md' : 'text-amber-400 hover:text-amber-300'
               }`}
@@ -628,7 +683,7 @@ const Classroom: React.FC = () => {
 
           {/* TAB 1: Live Chat */}
           {activeTab === 'chat' && (
-            <div className="flex-1 flex flex-col justify-between p-4 overflow-hidden">
+            <div className="flex-1 flex flex-col justify-between p-3 sm:p-4 overflow-hidden">
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
                 {chatMessages.map((msg, i) => (
                   <div
@@ -651,7 +706,7 @@ const Classroom: React.FC = () => {
                 ))}
               </div>
 
-              <form onSubmit={handleSendMessage} className="pt-3 border-t border-slate-800 flex gap-2">
+              <form onSubmit={handleSendMessage} className="pt-3 border-t border-slate-800 flex gap-2 flex-shrink-0">
                 <input
                   type="text"
                   placeholder="Ask a question..."
@@ -671,7 +726,7 @@ const Classroom: React.FC = () => {
 
           {/* TAB 2: Notes */}
           {activeTab === 'notes' && (
-            <div className="flex-1 flex flex-col p-4 overflow-hidden">
+            <div className="flex-1 flex flex-col p-3 sm:p-4 overflow-hidden">
               <span className="text-[11px] text-slate-400 font-bold mb-2">Live Collaborative Notepad:</span>
               <textarea
                 value={sharedNotes}
@@ -685,7 +740,7 @@ const Classroom: React.FC = () => {
 
           {/* TAB 3: AI Copilot */}
           {activeTab === 'ai' && (
-            <div className="flex-1 flex flex-col justify-between p-4 overflow-hidden">
+            <div className="flex-1 flex flex-col justify-between p-3 sm:p-4 overflow-hidden">
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
                 
                 {/* Quick Prompts */}
@@ -744,7 +799,7 @@ const Classroom: React.FC = () => {
                 )}
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex gap-2">
+              <div className="pt-3 border-t border-slate-800 flex gap-2 flex-shrink-0">
                 <input
                   type="text"
                   placeholder="Ask AI Copilot anything..."

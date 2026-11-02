@@ -171,7 +171,18 @@ const Navbar: React.FC = () => {
               Documentation
             </Link>
 
-            <div className="pt-3 border-t border-slate-100">
+            <div className="pt-3 border-t border-slate-100 space-y-2">
+              <button
+                onClick={toggleSound}
+                className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-between"
+              >
+                <span>Sound Effects</span>
+                <span className="flex items-center gap-1.5 text-primary-600 font-bold">
+                  {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 text-slate-400" />}
+                  {soundEnabled ? 'Enabled' : 'Muted'}
+                </span>
+              </button>
+
               {role ? (
                 <button
                   onClick={() => {
