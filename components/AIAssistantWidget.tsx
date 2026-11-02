@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, X, Sparkles, Send, MessageSquare, BookOpen, HelpCircle } from 'lucide-react';
+import { Bot, X, Sparkles, Send, MessageSquare, BookOpen, HelpCircle, ArrowRight, Video } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 interface AIMsg {
@@ -26,6 +26,11 @@ const AIAssistantWidget: React.FC = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const handleLaunchClassroom = () => {
+    setIsOpen(false);
+    navigate('/classroom/s1');
+  };
+
   const handleSend = (userQuery?: string) => {
     const q = userQuery || input;
     if (!q.trim()) return;
@@ -38,19 +43,21 @@ const AIAssistantWidget: React.FC = () => {
       let reply = '';
       const lower = q.toLowerCase();
 
-      if (lower.includes('classroom') || lower.includes('demo') || lower.includes('whiteboard')) {
-        reply = "🚀 You can launch our live 1-on-1 virtual classroom with the interactive whiteboard and video call right now! Click below to jump straight in:";
+      if (lower.includes('classroom') || lower.includes('demo') || lower.includes('whiteboard') || lower.includes('video')) {
+        reply = "🚀 Live 1-on-1 Classroom is ready! It includes the interactive whiteboard, dual video feeds, and in-call AI tutor. Click the button below to jump straight into the room:";
       } else if (lower.includes('math') || lower.includes('calculus') || lower.includes('physics')) {
         reply = "🎯 For Mathematics & Physics, Rajesh Sharma (M.Sc., 8+ yrs experience, 4.9⭐ rating) is our top-rated mentor at NPR 1,500/hr. You can book him directly with Khalti or eSewa!";
       } else if (lower.includes('computer') || lower.includes('code') || lower.includes('python')) {
         reply = "💻 Bikash Adhikari specializes in Computer Science, Python, and Web Development with a perfect 5.0⭐ rating!";
+      } else if (lower.includes('payment') || lower.includes('esewa') || lower.includes('khalti')) {
+        reply = "💳 We support instant Khalti, eSewa, and International Credit Card payments with secure escrow protection until your lesson completes!";
       } else {
         reply = `I can help you match with verified educators, explain study syllabuses, or guide you into the live interactive classroom! What subject are you preparing for?`;
       }
 
       setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
       setLoading(false);
-    }, 600);
+    }, 500);
   };
 
   return (
@@ -75,7 +82,7 @@ const AIAssistantWidget: React.FC = () => {
 
       {/* Slide-Up AI Drawer */}
       {isOpen && (
-        <div className="bg-slate-950 text-white rounded-3xl w-[360px] sm:w-[400px] h-[520px] shadow-2xl border border-slate-800 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="bg-slate-950 text-white rounded-3xl w-[360px] sm:w-[420px] h-[540px] shadow-2xl border border-slate-800 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
           
           {/* Header */}
           <div className="bg-gradient-to-r from-primary-900 via-indigo-950 to-slate-950 px-5 py-4 border-b border-slate-800 flex items-center justify-between">
@@ -102,26 +109,31 @@ const AIAssistantWidget: React.FC = () => {
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 text-xs">
             {/* Quick Actions */}
-            <div className="space-y-1.5 bg-slate-900/80 p-3 rounded-2xl border border-slate-800/80">
+            <div className="space-y-2 bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800">
               <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                <Sparkles className="h-3 w-3" /> Quick Questions
+                <Sparkles className="h-3 w-3" /> Quick Launch & Inquiries
               </span>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1.5">
+                {/* Instant 1-Click Launch Button */}
                 <button
-                  onClick={() => handleSend('Take me to the Live Classroom demo')}
-                  className="text-left p-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-300 text-[11px] transition-colors"
+                  onClick={handleLaunchClassroom}
+                  className="w-full text-left p-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl text-white text-xs font-bold transition-all shadow-md flex items-center justify-between hover:scale-[1.01]"
                 >
-                  🚀 Launch Live Classroom demo
+                  <span className="flex items-center gap-2">
+                    <Video className="h-4 w-4" /> 🚀 Launch Live Classroom Demo
+                  </span>
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </button>
+
                 <button
                   onClick={() => handleSend('Who is the best tutor for Calculus?')}
-                  className="text-left p-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-300 text-[11px] transition-colors"
+                  className="text-left p-2 bg-slate-800/80 hover:bg-slate-700/80 rounded-xl text-slate-300 text-[11px] transition-colors"
                 >
                   📐 Who is the best tutor for Calculus?
                 </button>
                 <button
                   onClick={() => handleSend('How does payment and escrow work?')}
-                  className="text-left p-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-300 text-[11px] transition-colors"
+                  className="text-left p-2 bg-slate-800/80 hover:bg-slate-700/80 rounded-xl text-slate-300 text-[11px] transition-colors"
                 >
                   💳 How does Khalti/eSewa payment work?
                 </button>
@@ -134,7 +146,7 @@ const AIAssistantWidget: React.FC = () => {
                 className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div
-                  className={`p-3 rounded-2xl max-w-[85%] leading-relaxed ${
+                  className={`p-3 rounded-2xl max-w-[88%] leading-relaxed ${
                     m.role === 'user'
                       ? 'bg-primary-600 text-white rounded-tr-none font-medium'
                       : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none shadow-md'
@@ -142,15 +154,12 @@ const AIAssistantWidget: React.FC = () => {
                 >
                   <p className="whitespace-pre-line">{m.text}</p>
                   
-                  {m.text.includes('live 1-on-1 virtual classroom') && (
+                  {(m.text.includes('Live 1-on-1 Classroom') || m.text.includes('virtual classroom')) && (
                     <button
-                      onClick={() => {
-                        setIsOpen(false);
-                        navigate('/classroom/s1');
-                      }}
-                      className="mt-2.5 w-full py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs rounded-xl shadow-md hover:opacity-90 flex items-center justify-center gap-1.5"
+                      onClick={handleLaunchClassroom}
+                      className="mt-3 w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-xs rounded-xl shadow-lg hover:opacity-90 flex items-center justify-center gap-2 transition-transform hover:scale-105"
                     >
-                      Enter Live Classroom Now →
+                      <Video className="h-4 w-4" /> Enter Live Classroom Now →
                     </button>
                   )}
                 </div>
@@ -169,7 +178,7 @@ const AIAssistantWidget: React.FC = () => {
           <div className="p-3 bg-slate-950 border-t border-slate-800 flex gap-2">
             <input
               type="text"
-              placeholder="Ask anything..."
+              placeholder="Ask AI Copilot anything..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}

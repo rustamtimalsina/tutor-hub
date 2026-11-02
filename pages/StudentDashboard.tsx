@@ -337,8 +337,8 @@ const StudentDashboard: React.FC = () => {
                     </div>
                   </div>
                   <button 
-                    onClick={() => alert('Starting WebRTC call...')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-xl text-xs font-bold"
+                    onClick={() => navigate('/classroom/s1')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-700 hover:bg-primary-100 rounded-xl text-xs font-bold transition-all hover:scale-105"
                   >
                     <Video className="h-3.5 w-3.5" /> Start Call
                   </button>

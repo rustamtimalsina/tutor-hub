@@ -14,6 +14,8 @@ const TutorDashboard: React.FC = () => {
   ]);
 
   const [notification, setNotification] = useState<string | null>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [hourlyRate, setHourlyRate] = useState(1500);
 
   const chartData = [
     { name: 'Mon', earnings: 1500 },
@@ -85,7 +87,7 @@ const TutorDashboard: React.FC = () => {
           
           <div className="flex items-center gap-3">
             <button 
-              onClick={() => alert('Profile settings: You are already in Verified Master Tier.')}
+              onClick={() => setShowProfileModal(true)}
               className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-bold transition-colors text-slate-700 shadow-sm"
             >
               <Edit2 className="h-4 w-4" />
@@ -297,6 +299,68 @@ const TutorDashboard: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Tutor Profile Settings Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black text-slate-900">Educator Profile Settings</h3>
+              <button 
+                onClick={() => setShowProfileModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs font-semibold text-slate-700">
+              <div>
+                <label className="block mb-1.5 uppercase tracking-wider text-slate-400 text-[10px]">Hourly Rate (NPR)</label>
+                <input 
+                  type="number"
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(Number(e.target.value))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1.5 uppercase tracking-wider text-slate-400 text-[10px]">Teaching Bio</label>
+                <textarea 
+                  defaultValue="Senior educator with M.Sc. in Physics. Specialized in calculus, mechanics, and exam preparation for high school & college students."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 font-medium"
+                  rows={3}
+                />
+              </div>
+
+              <div className="p-3 bg-emerald-50 rounded-xl text-emerald-800 text-[11px] font-bold flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                <span>Verified Master Tier • Instant payout enabled</span>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 flex gap-2">
+              <button
+                onClick={() => {
+                  setShowProfileModal(false);
+                  setNotification('Profile settings saved successfully!');
+                  setTimeout(() => setNotification(null), 3000);
+                }}
+                className="flex-1 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold transition-all shadow-md"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="px-5 py-3 border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
