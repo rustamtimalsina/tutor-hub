@@ -26,12 +26,12 @@ const Classroom: React.FC = () => {
   const navigate = useNavigate();
   const { sessions, role } = useApp();
 
-  const session = sessions.find((s) => s.id === sessionId) || {
-    id: sessionId || 'demo',
+  const session = (Array.isArray(sessions) ? sessions.find((s) => s && s.id === sessionId) : null) || {
+    id: sessionId || 's1',
     tutorName: 'Rajesh Sharma',
     subject: 'Mathematics',
     date: 'Today',
-    time: 'Live Now',
+    time: '10:00 AM',
     duration: '1 Hour',
     price: 1500,
     status: 'Upcoming' as const,
@@ -83,12 +83,9 @@ const Classroom: React.FC = () => {
     "📝 Lesson Plan:\n1. Derivative of Composite Functions (Chain Rule)\n2. Implicit Differentiation\n3. Physics application: Velocity & Acceleration\n\nNotes from Tutor:\n- Recall that d/dx [f(g(x))] = f'(g(x)) * g'(x)"
   );
 
-  // Timer & Join Call Sound
+  // Timer
   const [secondsElapsed, setSecondsElapsed] = useState(35);
   useEffect(() => {
-    // Play futuristic room entry sound
-    sounds.playJoinCall();
-
     const timer = setInterval(() => setSecondsElapsed((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
   }, []);
