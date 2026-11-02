@@ -1,14 +1,24 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, BookOpen, LogOut, Sparkles, User, ShieldCheck } from 'lucide-react';
+import { Menu, X, BookOpen, LogOut, Sparkles, User, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { sounds } from '../utils/soundEffects';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(sounds.enabled);
   const location = useLocation();
   const navigate = useNavigate();
   const { role, setRole } = useApp();
+
+  const toggleSound = () => {
+    sounds.enabled = !sounds.enabled;
+    setSoundEnabled(sounds.enabled);
+    if (sounds.enabled) {
+      sounds.playPop();
+    }
+  };
 
   const isActive = (path: string) =>
     location.pathname === path
@@ -68,6 +78,19 @@ const Navbar: React.FC = () => {
 
             {/* Desktop Auth / Profile controls */}
             <div className="hidden md:flex items-center space-x-3">
+              {/* Sound Effects Toggle */}
+              <button
+                onClick={toggleSound}
+                className={`p-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  soundEnabled
+                    ? 'bg-primary-50 border-primary-200 text-primary-700'
+                    : 'bg-slate-50 border-slate-200 text-slate-400'
+                }`}
+                title={soundEnabled ? 'Mute Sound Effects' : 'Enable Sound Effects'}
+              >
+                {soundEnabled ? <Volume2 className="h-4 w-4 text-primary-600" /> : <VolumeX className="h-4 w-4" />}
+              </button>
+
               {role ? (
                 <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-1.5 pl-3 rounded-2xl">
                   <span className="text-xs font-bold text-slate-700 capitalize flex items-center gap-1.5">

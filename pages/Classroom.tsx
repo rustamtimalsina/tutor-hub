@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import confetti from 'canvas-confetti';
+import { sounds } from '../utils/soundEffects';
 
 interface Point {
   x: number;
@@ -82,9 +83,12 @@ const Classroom: React.FC = () => {
     "📝 Lesson Plan:\n1. Derivative of Composite Functions (Chain Rule)\n2. Implicit Differentiation\n3. Physics application: Velocity & Acceleration\n\nNotes from Tutor:\n- Recall that d/dx [f(g(x))] = f'(g(x)) * g'(x)"
   );
 
-  // Timer
+  // Timer & Join Call Sound
   const [secondsElapsed, setSecondsElapsed] = useState(35);
   useEffect(() => {
+    // Play futuristic room entry sound
+    sounds.playJoinCall();
+
     const timer = setInterval(() => setSecondsElapsed((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -97,6 +101,7 @@ const Classroom: React.FC = () => {
 
   // Real Camera Activation
   const toggleCamera = async () => {
+    sounds.playToggle(!videoOn);
     if (videoOn && hasWebcam && localStream) {
       localStream.getVideoTracks().forEach((track) => track.stop());
       setLocalStream(null);
@@ -122,6 +127,7 @@ const Classroom: React.FC = () => {
   };
 
   const toggleScreenShare = async () => {
+    sounds.playToggle(!screenSharing);
     if (!screenSharing) {
       try {
         const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
@@ -272,6 +278,7 @@ const Classroom: React.FC = () => {
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
+    sounds.playClick();
     setChatMessages((prev) => [
       ...prev,
       { sender: 'You', text: inputText, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
@@ -283,6 +290,8 @@ const Classroom: React.FC = () => {
   const handleAskAI = (promptText?: string) => {
     const query = promptText || aiInput;
     if (!query.trim()) return;
+
+    sounds.playClick();
 
     const userMsg: AIMessage = {
       role: 'user',
@@ -308,6 +317,8 @@ const Classroom: React.FC = () => {
         response = `Great question on ${session.subject}! Remember to check dimensional units and break complex problems into 2-step modular equations. Ask your mentor ${session.tutorName} to sketch the graph on the whiteboard!`;
       }
 
+      sounds.playMessage();
+
       setAiMessages((prev) => [
         ...prev,
         {
@@ -321,6 +332,7 @@ const Classroom: React.FC = () => {
   };
 
   const triggerReaction = (emoji: string) => {
+    sounds.playPop();
     setReaction(emoji);
     try {
       confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
@@ -329,6 +341,7 @@ const Classroom: React.FC = () => {
   };
 
   const handleEndSession = () => {
+    sounds.playLeaveCall();
     const targetDashboard = role === 'tutor' ? '/tutor-dashboard' : '/student-dashboard';
     navigate(targetDashboard);
   };
@@ -552,7 +565,10 @@ const Classroom: React.FC = () => {
           {/* Bottom Call Controls */}
           <div className="h-16 bg-slate-950/80 backdrop-blur-md rounded-2xl border border-slate-800 px-6 flex items-center justify-center gap-4">
             <button
-              onClick={() => setMicOn(!micOn)}
+              onClick={() => {
+                sounds.playToggle(!micOn);
+                setMicOn(!micOn);
+              }}
               className={`p-3 rounded-2xl transition-all ${
                 micOn ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
               }`}

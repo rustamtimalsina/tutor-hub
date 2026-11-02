@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bot, X, Sparkles, Send, MessageSquare, BookOpen, HelpCircle, ArrowRight, Video } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { sounds } from '../utils/soundEffects';
 
 interface AIMsg {
   role: 'user' | 'assistant';
@@ -27,6 +28,7 @@ const AIAssistantWidget: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const handleLaunchClassroom = () => {
+    sounds.playJoinCall();
     setIsOpen(false);
     navigate('/classroom/s1');
   };
@@ -35,6 +37,7 @@ const AIAssistantWidget: React.FC = () => {
     const q = userQuery || input;
     if (!q.trim()) return;
 
+    sounds.playClick();
     setMessages((prev) => [...prev, { role: 'user', text: q }]);
     setInput('');
     setLoading(true);
@@ -55,6 +58,7 @@ const AIAssistantWidget: React.FC = () => {
         reply = `I can help you match with verified educators, explain study syllabuses, or guide you into the live interactive classroom! What subject are you preparing for?`;
       }
 
+      sounds.playMessage();
       setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
       setLoading(false);
     }, 500);

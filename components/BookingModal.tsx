@@ -7,6 +7,7 @@ import confetti from 'canvas-confetti';
 import { Tutor } from '../types';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { sounds } from '../utils/soundEffects';
 
 interface BookingModalProps {
   tutor: Tutor;
@@ -37,14 +38,19 @@ const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) =
 
   const handleProceedToPayment = () => {
     if (!selectedDate || !selectedTime) return;
+    sounds.playClick();
     setStep('payment');
   };
 
   const handleProcessPayment = () => {
+    sounds.playClick();
     setIsProcessing(true);
     setTimeout(() => {
       const generatedRef = `${paymentMethod.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
       setTxRef(generatedRef);
+
+      // Play uplifting celebratory 4-note chord sound
+      sounds.playSuccess();
 
       // Add to store
       addSession({
