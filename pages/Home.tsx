@@ -53,10 +53,10 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/70">
+    <div className="min-h-screen bg-slate-50/70 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300">
       
       {/* 3D Masterpiece Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white pt-16 pb-24 px-4 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-900 text-white pt-20 sm:pt-28 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8">
         
         {/* Ambient Glows */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/20 rounded-full blur-3xl pointer-events-none" />
@@ -65,20 +65,20 @@ const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
           
           {/* Left Text Column */}
-          <div className="lg:col-span-7 text-center lg:text-left space-y-6">
+          <div className="lg:col-span-7 text-center lg:text-left space-y-5 sm:space-y-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-primary-200 text-xs font-semibold uppercase tracking-wider shadow-inner">
               <Sparkles className="h-4 w-4 text-amber-300 animate-spin" style={{ animationDuration: '4s' }} />
               Next-Gen 3D Interactive Mentorship
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.15]">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.15]">
               Master Any Subject with <br />
               <span className="bg-gradient-to-r from-primary-400 via-purple-300 to-accent-cyan bg-clip-text text-transparent">
                 World-Class Mentors
               </span>
             </h1>
 
-            <p className="text-base sm:text-lg text-slate-300 max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
+            <p className="text-sm sm:text-lg text-slate-300 max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
               Experience personalized 1-on-1 learning with verified tutors in Math, Science, Coding, and Languages. Interactive, measurable, and engaging.
             </p>
 
@@ -90,7 +90,7 @@ const Home: React.FC = () => {
                 </div>
                 <input
                   type="text"
-                  className="w-full bg-transparent border-none text-white placeholder-slate-400 focus:outline-none focus:ring-0 px-3 py-3 text-sm sm:text-base font-medium"
+                  className="w-full bg-transparent border-none text-white placeholder-slate-400 focus:outline-none focus:ring-0 px-3 py-2.5 sm:py-3 text-xs sm:text-base font-medium"
                   placeholder="Search by subject, tutor name, or keyword..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -100,52 +100,56 @@ const Home: React.FC = () => {
                     const el = document.getElementById('tutors-catalog');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="flex items-center gap-1.5 px-6 py-3 rounded-xl bg-gradient-to-r from-primary-500 to-indigo-600 hover:from-primary-600 hover:to-indigo-700 text-white font-bold text-sm shadow-md shadow-primary-500/30 transition-all hover:scale-105"
+                  className="bg-gradient-to-r from-primary-500 to-indigo-600 hover:from-primary-600 hover:to-indigo-700 text-white px-4 sm:px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-lg transition-transform hover:scale-105 active:scale-95 flex-shrink-0"
                 >
-                  Explore <ArrowRight className="h-4 w-4" />
+                  Explore <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* Quick Metrics */}
-            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 pt-4 text-xs sm:text-sm text-slate-300">
-              <div className="flex items-center gap-2">
+            {/* Trust Points */}
+            <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 text-xs text-slate-300 font-semibold">
+              <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                 <span>100% Verified Tutors</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Award className="h-4 w-4 text-amber-400" />
                 <span>Top 1% Educators</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-accent-cyan" />
+              <div className="flex items-center gap-1.5">
+                <Zap className="h-4 w-4 text-cyan-400" />
                 <span>Instant Booking</span>
               </div>
             </div>
+
           </div>
 
-          {/* Right 3D Scene Column */}
-          <div className="lg:col-span-5 h-[360px] sm:h-[420px] lg:h-[500px] flex items-center justify-center relative">
-            <Hero3DCanvas />
+          {/* Right 3D Interactive Canvas Column */}
+          <div className="lg:col-span-5 flex justify-center items-center relative">
+            <div className="w-full max-w-[340px] sm:max-w-[420px] lg:max-w-none">
+              <Hero3DCanvas />
+            </div>
           </div>
 
         </div>
+
       </section>
 
-      {/* Popular Subjects Carousel / Grid */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto -mt-10 relative z-20">
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-glass border border-white">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
+      {/* Popular Subjects Pill Grid */}
+      <section className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80 dark:border-slate-800 transition-colors">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Explore by Subject</h2>
-              <p className="text-xs sm:text-sm text-slate-500">Pick a category to filter top tutors immediately</p>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Explore by Subject</h2>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">Click any subject to filter available educators instantly</p>
             </div>
-            <button 
+            <button
               onClick={() => setSelectedSubject('All subjects')}
-              className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all ${
-                selectedSubject === 'All subjects' 
-                  ? 'bg-primary-600 text-white shadow-sm' 
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              className={`text-xs font-bold transition-colors ${
+                selectedSubject === 'All subjects'
+                  ? 'text-primary-600 dark:text-primary-400 underline font-black'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
               Show All Subjects
@@ -159,16 +163,16 @@ const Home: React.FC = () => {
                 <button
                   key={subject.id}
                   onClick={() => setSelectedSubject(subject.name)}
-                  className={`flex flex-col items-center justify-center p-5 rounded-2xl transition-all group ${
+                  className={`flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl transition-all group ${
                     isSelected
-                      ? 'bg-primary-600 text-white shadow-lg shadow-primary-200 scale-105'
-                      : 'bg-slate-50/80 hover:bg-white text-slate-700 hover:shadow-md border border-slate-100 hover:border-primary-200'
+                      ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30 scale-105'
+                      : 'bg-slate-50 dark:bg-slate-800/70 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 hover:shadow-md border border-slate-200/60 dark:border-slate-700/80 hover:border-primary-300 dark:hover:border-primary-500'
                   }`}
                 >
-                  <span className={`text-3xl mb-2 transition-transform duration-300 ${isSelected ? 'scale-110' : 'group-hover:scale-125'}`}>
+                  <span className={`text-2xl sm:text-3xl mb-2 transition-transform duration-300 ${isSelected ? 'scale-110' : 'group-hover:scale-125'}`}>
                     {subject.icon}
                   </span>
-                  <span className={`text-xs sm:text-sm font-bold ${isSelected ? 'text-white' : 'text-slate-800'}`}>
+                  <span className={`text-xs sm:text-sm font-bold ${isSelected ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>
                     {subject.name}
                   </span>
                 </button>
@@ -179,23 +183,23 @@ const Home: React.FC = () => {
       </section>
 
       {/* Main Catalog Section */}
-      <section id="tutors-catalog" className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <section id="tutors-catalog" className="py-6 sm:py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-8">
           
           {/* Filters Sidebar */}
           <aside className="w-full lg:w-80 flex-shrink-0">
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 sticky top-24 space-y-6">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 sticky top-24 space-y-6 transition-colors">
               
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-primary-100 text-primary-700 rounded-lg">
+                  <div className="p-1.5 bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 rounded-lg">
                     <SlidersHorizontal className="h-4 w-4" />
                   </div>
-                  <h3 className="font-bold text-slate-900 text-base">Filters</h3>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base">Filters</h3>
                 </div>
                 <button
                   onClick={handleClearFilters}
-                  className="text-xs text-primary-600 hover:text-primary-800 font-semibold"
+                  className="text-xs text-primary-600 dark:text-primary-400 hover:underline font-semibold"
                 >
                   Reset all
                 </button>
@@ -203,11 +207,11 @@ const Home: React.FC = () => {
 
               {/* Subject */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Subject</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Subject</label>
                 <select
                   value={selectedSubject}
                   onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-primary-500 focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-primary-500 focus:outline-none"
                 >
                   <option value="All subjects">All subjects</option>
                   {POPULAR_SUBJECTS.map((s) => (
@@ -216,13 +220,13 @@ const Home: React.FC = () => {
                 </select>
               </div>
 
-              {/* Grade Level Filter (Now fully functional!) */}
+              {/* Grade Level Filter */}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Grade Level</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Grade Level</label>
                 <select
                   value={selectedLevel}
                   onChange={(e) => setSelectedLevel(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-primary-500 focus:outline-none"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-primary-500 focus:outline-none"
                 >
                   <option value="All levels">All levels</option>
                   <option value="Elementary">Elementary</option>
@@ -235,8 +239,8 @@ const Home: React.FC = () => {
               {/* Hourly Price Range Slider */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Max Hourly Rate</label>
-                  <span className="text-xs font-black text-primary-700 bg-primary-50 px-2 py-0.5 rounded-md">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Max Hourly Rate</label>
+                  <span className="text-xs font-black text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/50 px-2 py-0.5 rounded-md border border-primary-100 dark:border-primary-900/50">
                     NPR {priceRange}
                   </span>
                 </div>
@@ -247,7 +251,7 @@ const Home: React.FC = () => {
                   step="100"
                   value={priceRange}
                   onChange={(e) => setPriceRange(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+                  className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary-600"
                 />
                 <div className="flex justify-between text-[11px] text-slate-400 font-medium mt-1">
                   <span>NPR 500</span>
@@ -255,11 +259,11 @@ const Home: React.FC = () => {
                 </div>
               </div>
 
-              {/* Rating Slider (Now fully functional!) */}
+              {/* Rating Slider */}
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Minimum Rating</label>
-                  <span className="text-xs font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md flex items-center gap-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Minimum Rating</label>
+                  <span className="text-xs font-black text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200/50 flex items-center gap-1">
                     <Star className="h-3 w-3 fill-current" /> {minRating > 0 ? `${minRating.toFixed(1)}+` : 'Any'}
                   </span>
                 </div>
@@ -270,7 +274,7 @@ const Home: React.FC = () => {
                   step="0.5"
                   value={minRating}
                   onChange={(e) => setMinRating(Number(e.target.value))}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                  className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
                 />
                 <div className="flex justify-between text-[11px] text-slate-400 font-medium mt-1">
                   <span>Any</span>
@@ -278,8 +282,8 @@ const Home: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-100/60 text-xs text-indigo-900 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-indigo-600 flex-shrink-0" />
+              <div className="p-3 bg-indigo-50/70 dark:bg-indigo-950/30 rounded-2xl border border-indigo-100/60 dark:border-indigo-900/40 text-xs text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
                 <span>Showing verified tutors with immediate 2026 calendar availability.</span>
               </div>
 
@@ -291,20 +295,20 @@ const Home: React.FC = () => {
             
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Available Tutors</h2>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Available Tutors</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                   Showing {filteredTutors.length} verified educator{filteredTutors.length === 1 ? '' : 's'}
                 </p>
               </div>
             </div>
 
             {filteredTutors.length === 0 ? (
-              <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm">
-                <div className="h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div className="h-16 w-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
                   <Search className="h-8 w-8" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800">No tutors found</h3>
-                <p className="text-sm text-slate-500 max-w-md mx-auto mt-1 mb-6">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white">No tutors found</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1 mb-6">
                   No educators matched your exact criteria. Try resetting your filters or adjusting your price and rating ranges.
                 </p>
                 <button
@@ -321,7 +325,7 @@ const Home: React.FC = () => {
 
                   return (
                     <TiltCard key={tutor.id} className="w-full">
-                      <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200/80 hover:shadow-xl hover:border-primary-200 transition-all flex flex-col md:flex-row gap-6 relative">
+                      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200/80 dark:border-slate-800 hover:shadow-xl hover:border-primary-300 dark:hover:border-primary-500 transition-all flex flex-col md:flex-row gap-6 relative">
                         
                         {/* Bookmark Button */}
                         <button
@@ -331,8 +335,8 @@ const Home: React.FC = () => {
                           }}
                           className={`absolute top-5 right-5 p-2 rounded-full border transition-all z-20 ${
                             saved
-                              ? 'bg-rose-50 border-rose-200 text-rose-500 scale-110'
-                              : 'bg-white border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50/50'
+                              ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60 text-rose-500 scale-110'
+                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-300 hover:text-rose-500 hover:bg-rose-50/50'
                           }`}
                           title={saved ? 'Remove from saved' : 'Save tutor'}
                         >
@@ -345,17 +349,17 @@ const Home: React.FC = () => {
                             <img
                               src={tutor.avatar}
                               alt={tutor.name}
-                              className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-4 border-white shadow-md ring-2 ring-slate-100"
+                              className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-4 border-white dark:border-slate-800 shadow-md ring-2 ring-slate-100 dark:ring-slate-700"
                             />
                             <span className="absolute -bottom-2 -right-1 px-2 py-0.5 bg-emerald-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm">
                               {tutor.availability}
                             </span>
                           </div>
 
-                          <div className="mt-3 flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200/60">
+                          <div className="mt-3 flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-200/60 dark:border-amber-900/40">
                             <Star className="h-4 w-4 text-amber-500 fill-current" />
-                            <span className="text-xs font-black text-slate-900">{tutor.rating}</span>
-                            <span className="text-[11px] text-slate-500">({tutor.reviewCount})</span>
+                            <span className="text-xs font-black text-slate-900 dark:text-white">{tutor.rating}</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400">({tutor.reviewCount})</span>
                           </div>
                         </div>
 
@@ -363,9 +367,9 @@ const Home: React.FC = () => {
                         <div className="flex-grow space-y-3">
                           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start pr-8">
                             <div>
-                              <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                                 {tutor.name}
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                                   {tutor.experience}
                                 </span>
                               </h3>
@@ -373,7 +377,7 @@ const Home: React.FC = () => {
                                 {tutor.subjects.map((sub) => (
                                   <span
                                     key={sub}
-                                    className="px-2.5 py-1 rounded-lg text-xs font-bold bg-primary-50 text-primary-700 border border-primary-100"
+                                    className="px-2.5 py-1 rounded-lg text-xs font-bold bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-300 border border-primary-100 dark:border-primary-900/50"
                                   >
                                     {sub}
                                   </span>
@@ -382,40 +386,40 @@ const Home: React.FC = () => {
                             </div>
 
                             <div className="mt-3 sm:mt-0 text-left sm:text-right">
-                              <div className="text-2xl font-black text-primary-700 tracking-tight">
+                              <div className="text-2xl font-black text-primary-600 dark:text-primary-400 tracking-tight">
                                 NPR {tutor.price}
                               </div>
                               <span className="text-xs text-slate-400 font-medium">per hour</span>
                             </div>
                           </div>
 
-                          <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">
+                          <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed line-clamp-2">
                             {tutor.bio}
                           </p>
 
                           {/* Grade levels & location */}
-                          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1 font-medium">
-                            <div className="flex items-center gap-1 text-slate-600">
-                              <MapPin className="h-3.5 w-3.5 text-primary-600" />
+                          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1 font-medium">
+                            <div className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                              <MapPin className="h-3.5 w-3.5 text-primary-600 dark:text-primary-400" />
                               <span>{tutor.location}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <span className="text-slate-400">Levels:</span>
-                              <span className="font-semibold text-slate-700">{tutor.gradeLevels.join(', ')}</span>
+                              <span className="font-semibold text-slate-700 dark:text-slate-200">{tutor.gradeLevels.join(', ')}</span>
                             </div>
                           </div>
 
                           {/* Card Actions */}
-                          <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-end gap-2.5">
+                          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-end gap-2.5">
                             <button
                               onClick={() => navigate(`/tutor/${tutor.id}`)}
-                              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition-all"
+                              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold transition-all"
                             >
                               View Full Profile
                             </button>
                             <button
                               onClick={() => navigate(`/tutor/${tutor.id}`)}
-                              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-primary-300 hover:shadow-lg transition-all"
+                              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-primary-500/25 hover:shadow-lg transition-all"
                             >
                               Book Session
                             </button>

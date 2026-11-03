@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 
 const Documentation: React.FC = () => {
   const [activeSection, setActiveSection] = useState('overview');
-  const [searchQuery, setSearchQuery] = useState('');
 
   const sections = [
     { id: 'overview', title: 'Platform Overview', icon: Book },
@@ -15,7 +14,7 @@ const Documentation: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50/70 pb-16">
+    <div className="min-h-screen bg-slate-50/70 dark:bg-slate-950 text-slate-800 dark:text-slate-100 pb-16 transition-colors duration-200">
       
       {/* Header */}
       <div className="bg-gradient-to-r from-slate-900 via-primary-950 to-indigo-950 text-white py-12 px-4 sm:px-6 lg:px-8 shadow-md">
@@ -44,10 +43,10 @@ const Documentation: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* Navigation Sidebar (Horizontal on Mobile, Vertical on Desktop) */}
+          {/* Navigation Sidebar */}
           <aside className="w-full lg:w-72 flex-shrink-0">
-            <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200/80 sticky top-24 space-y-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-3 block mb-1">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-slate-800 sticky top-24 space-y-2 transition-colors">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-3 block mb-1">
                 Table of Contents
               </span>
               
@@ -61,8 +60,8 @@ const Documentation: React.FC = () => {
                       onClick={() => setActiveSection(sec.id)}
                       className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all flex-shrink-0 text-left ${
                         isSelected
-                          ? 'bg-primary-600 text-white shadow-md shadow-primary-200'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                          ? 'bg-primary-600 text-white shadow-md shadow-primary-500/30'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -79,27 +78,27 @@ const Documentation: React.FC = () => {
             
             {/* SECTION 1: Overview */}
             {activeSection === 'overview' && (
-              <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80 space-y-6">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6 transition-colors">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Platform Overview</h2>
-                  <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Platform Overview</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                     Tutor Hub is an interactive, personalized 1-on-1 tutoring platform built for high school and university students.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
-                    <span className="text-xs font-bold text-primary-700 uppercase tracking-wider">For Students</span>
-                    <h3 className="font-bold text-slate-900 text-base">Personalized Mentorship</h3>
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-2">
+                    <span className="text-xs font-bold text-primary-700 dark:text-primary-400 uppercase tracking-wider">For Students</span>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base">Personalized Mentorship</h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                       Search verified educators by subject, grade level, and budget. Book instant sessions with escrow protection and learn at your own pace.
                     </p>
                   </div>
 
-                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
-                    <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider">For Educators</span>
-                    <h3 className="font-bold text-slate-900 text-base">Teach & Earn</h3>
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-2">
+                    <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">For Educators</span>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base">Teach & Earn</h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                       Manage incoming booking requests, host virtual sessions, set your own hourly rates, and receive verified digital wallet payouts.
                     </p>
                   </div>
@@ -109,32 +108,32 @@ const Documentation: React.FC = () => {
 
             {/* SECTION 2: Virtual Classroom */}
             {activeSection === 'classroom' && (
-              <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80 space-y-6">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6 transition-colors">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">3D Virtual Classroom Guide</h2>
-                  <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">3D Virtual Classroom Guide</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                     How to make the most of the live video classroom, drawing tools, and collaborative notes.
                   </p>
                 </div>
 
-                <div className="space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                    <h4 className="font-bold text-slate-900 mb-1">1. High-DPI Whiteboard</h4>
-                    <p className="text-xs text-slate-500">
+                <div className="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                    <h4 className="font-bold text-slate-900 dark:text-white mb-1">1. High-DPI Whiteboard</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Equipped with quadratic Bézier curve smoothing for tablet styluses, multiple pen colors, thickness control, and 1-click PNG export.
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                    <h4 className="font-bold text-slate-900 mb-1">2. Hardware Video & Screen Share</h4>
-                    <p className="text-xs text-slate-500">
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                    <h4 className="font-bold text-slate-900 dark:text-white mb-1">2. Hardware Video & Screen Share</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Toggle your real webcam or share your browser window for problem set reviews.
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                    <h4 className="font-bold text-slate-900 mb-1">3. In-Call AI Assistant</h4>
-                    <p className="text-xs text-slate-500">
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+                    <h4 className="font-bold text-slate-900 dark:text-white mb-1">3. In-Call AI Assistant</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Ask the AI Copilot to break down theorems or generate practice questions on the fly without leaving the room.
                     </p>
                   </div>
@@ -153,31 +152,31 @@ const Documentation: React.FC = () => {
 
             {/* SECTION 3: Booking & Payments */}
             {activeSection === 'booking' && (
-              <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80 space-y-6">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6 transition-colors">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Booking & Escrow Payments</h2>
-                  <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Booking & Escrow Payments</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                     Transparent pricing in NPR with zero hidden commissions.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-2xl bg-purple-50 border border-purple-100 text-center">
-                    <h4 className="font-black text-purple-900 text-sm">Khalti Wallet</h4>
-                    <p className="text-xs text-purple-700 mt-1">Instant mobile wallet checkout</p>
+                  <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900/40 text-center">
+                    <h4 className="font-black text-purple-900 dark:text-purple-300 text-sm">Khalti Wallet</h4>
+                    <p className="text-xs text-purple-700 dark:text-purple-400 mt-1">Instant mobile wallet checkout</p>
                   </div>
-                  <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-center">
-                    <h4 className="font-black text-emerald-900 text-sm">eSewa Direct</h4>
-                    <p className="text-xs text-emerald-700 mt-1">Secure Nepali mobile banking</p>
+                  <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 text-center">
+                    <h4 className="font-black text-emerald-900 dark:text-emerald-300 text-sm">eSewa Direct</h4>
+                    <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-1">Secure Nepali mobile banking</p>
                   </div>
-                  <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 text-center">
-                    <h4 className="font-black text-indigo-900 text-sm">Visa & Mastercard</h4>
-                    <p className="text-xs text-indigo-700 mt-1">International card payments</p>
+                  <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 text-center">
+                    <h4 className="font-black text-indigo-900 dark:text-indigo-300 text-sm">Visa & Mastercard</h4>
+                    <p className="text-xs text-indigo-700 dark:text-indigo-400 mt-1">International card payments</p>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/60 text-xs text-amber-900 leading-relaxed flex items-start gap-3">
-                  <ShieldCheck className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-900/40 text-xs text-amber-900 dark:text-amber-300 leading-relaxed flex items-start gap-3">
+                  <ShieldCheck className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold">Escrow Protection:</span> When you schedule a lesson, funds are locked in escrow. The tutor is only paid once the session has concluded successfully. You can cancel with a full refund up to 12 hours prior to the lesson.
                   </div>
@@ -187,23 +186,23 @@ const Documentation: React.FC = () => {
 
             {/* SECTION 4: AI Copilot */}
             {activeSection === 'ai' && (
-              <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80 space-y-6">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6 transition-colors">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">AI Study Copilot</h2>
-                  <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">AI Study Copilot</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                     Your personal 24/7 academic assistant powered by state-of-the-art language models.
                   </p>
                 </div>
 
-                <div className="space-y-3 text-xs text-slate-600">
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="font-bold text-slate-900">⚡ Step-by-Step Problem Solving:</span> Breaks down complex differential equations and physics derivations into bite-sized steps.
+                <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300">
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <span className="font-bold text-slate-900 dark:text-white">⚡ Step-by-Step Problem Solving:</span> Breaks down complex differential equations and physics derivations into bite-sized steps.
                   </div>
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="font-bold text-slate-900">🎯 Practice Question Generator:</span> Generates tailor-made exam questions tailored to your current topic.
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <span className="font-bold text-slate-900 dark:text-white">🎯 Practice Question Generator:</span> Generates tailor-made exam questions tailored to your current topic.
                   </div>
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="font-bold text-slate-900">📋 Automatic Lesson Summaries:</span> Consolidates main formulas and key takeaways after each lesson.
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <span className="font-bold text-slate-900 dark:text-white">📋 Automatic Lesson Summaries:</span> Consolidates main formulas and key takeaways after each lesson.
                   </div>
                 </div>
               </div>
@@ -211,10 +210,10 @@ const Documentation: React.FC = () => {
 
             {/* SECTION 5: FAQs */}
             {activeSection === 'faq' && (
-              <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80 space-y-6">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200/80 dark:border-slate-800 space-y-6 transition-colors">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Frequently Asked Questions</h2>
-                  <p className="text-sm text-slate-500 mt-1">Quick answers to common questions.</p>
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Frequently Asked Questions</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Quick answers to common questions.</p>
                 </div>
 
                 <div className="space-y-3">
@@ -223,9 +222,9 @@ const Documentation: React.FC = () => {
                     { q: 'Can I download the whiteboard notes after class?', a: 'Yes! Simply click "Save Notes" at the top of the classroom to download a high-resolution PNG of everything drawn during the session.' },
                     { q: 'Are tutors verified?', a: 'Every tutor undergoes background qualification checks and syllabus verification before their profile is marked Verified on Tutor Hub.' },
                   ].map((faq, i) => (
-                    <div key={i} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
-                      <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{faq.q}</h4>
-                      <p className="text-xs text-slate-500 leading-relaxed">{faq.a}</p>
+                    <div key={i} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-1">
+                      <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">{faq.q}</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{faq.a}</p>
                     </div>
                   ))}
                 </div>

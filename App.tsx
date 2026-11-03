@@ -11,6 +11,7 @@ import Auth from './pages/Auth';
 import Classroom from './pages/Classroom';
 import AIAssistantWidget from './components/AIAssistantWidget';
 import { AppProvider } from './context/AppContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -103,13 +104,15 @@ const AppContent: React.FC = () => {
 export function App() {
   return (
     <ErrorBoundary>
-      <AppProvider>
-        <Router>
-          <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased selection:bg-primary-500 selection:text-white transition-colors duration-200">
-            <AppContent />
-          </div>
-        </Router>
-      </AppProvider>
+      <ThemeProvider>
+        <AppProvider>
+          <Router>
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased selection:bg-primary-500 selection:text-white transition-colors duration-200">
+              <AppContent />
+            </div>
+          </Router>
+        </AppProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }
