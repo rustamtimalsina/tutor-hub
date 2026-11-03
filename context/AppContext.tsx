@@ -2,20 +2,21 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session, Tutor, User, Review, AppNotification } from '../types';
 import { MOCK_STUDENT_SESSIONS, MOCK_TUTORS, MOCK_USERS, MOCK_REVIEWS, MOCK_NOTIFICATIONS } from '../constants';
 import { sounds } from '../utils/soundEffects';
+import { api } from '../services/api';
 
 interface AppContextType {
   currentUser: User | null;
   role: 'student' | 'tutor' | null;
   setRole: (role: 'student' | 'tutor' | null) => void;
   sessions: Session[];
-  addSession: (session: Omit<Session, 'id'>) => void;
+  addSession: (session: Omit<Session, 'id'>) => Promise<void>;
   cancelSession: (id: string) => void;
   savedTutorIds: string[];
   toggleSaveTutor: (id: string) => void;
   isTutorSaved: (id: string) => boolean;
   tutors: Tutor[];
   reviews: Review[];
-  addReview: (review: Omit<Review, 'id' | 'date'>) => void;
+  addReview: (review: Omit<Review, 'id' | 'date'>) => Promise<void>;
   notifications: AppNotification[];
   unreadCount: number;
   markNotificationAsRead: (id: string) => void;
@@ -28,6 +29,8 @@ interface AppContextType {
   updateProfile: (updates: Partial<User>) => void;
   darkMode: boolean;
   toggleDarkMode: () => void;
+  isServerConnected: boolean;
+  refreshServerData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -73,7 +76,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : ['1'];
   });
 
-  const [tutors] = useState<Tutor[]>(MOCK_TUTORS);
+  const [tutors, setTutors] = useState<Tutor[]>(MOCK_TUTORS);
 
   const [reviews, setReviews] = useState<Review[]>(() => {
     const saved = localStorage.getItem('tutorHubReviews');
@@ -100,8 +103,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [darkMode, setDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem('tutorHubTheme') === 'dark';
+    return localStorage.getItem('app_theme') === 'dark';
   });
+
+  const [isServerConnected, setIsServerConnected] = useState<boolean>(false);
+
+  // Sync data with backend on mount
+  const refreshServerData = async () => {
+    try {
+      const connected = await api.checkHealth();
+      setIsServerConnected(connected);
+
+      if (connected) {
+        const [serverTutors, serverBookings] = await Promise.all([
+          api.getTutors(),
+          api.getBookings(),
+        ]);
+        if (serverTutors && serverTutors.length > 0) {
+          setTutors(serverTutors);
+        }
+        if (serverBookings && serverBookings.length > 0) {
+          setSessions((prev) => {
+            // Merge server bookings with local ones without duplicates
+            const ids = new Set(serverBookings.map((b) => b.id));
+            const localOnly = prev.filter((p) => !ids.has(p.id));
+            return [...localOnly, ...serverBookings];
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Error refreshing server data:', err);
+      setIsServerConnected(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshServerData();
+  }, []);
 
   // Sync user & role
   useEffect(() => {
@@ -139,16 +177,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('tutorHubNotifications', JSON.stringify(notifications));
   }, [notifications]);
 
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('tutorHubTheme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('tutorHubTheme', 'light');
-    }
-  }, [darkMode]);
-
   const toggleDarkMode = () => {
     setDarkMode((prev) => !prev);
     try {
@@ -159,7 +187,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const setRole = (newRole: 'student' | 'tutor' | null) => {
     setRoleState(newRole);
     if (currentUser && newRole && currentUser.role !== newRole) {
-      // Switch active user demo persona if switching roles
       const mockUser = MOCK_USERS[newRole];
       if (mockUser) {
         setCurrentUser(mockUser);
@@ -169,53 +196,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const login = async (email: string, _password?: string, preferredRole?: 'student' | 'tutor'): Promise<User> => {
-    // Check if user exists in saved users registry
-    const savedUsersStr = localStorage.getItem('tutorHubRegisteredUsers');
-    const registeredUsers: User[] = savedUsersStr ? JSON.parse(savedUsersStr) : [];
-    const matched = registeredUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  const login = async (email: string, password?: string, preferredRole?: 'student' | 'tutor'): Promise<User> => {
+    // Call API client
+    const user = await api.login(email, password, preferredRole);
+    setCurrentUser(user);
+    setRoleState(user.role);
 
-    if (matched) {
-      setCurrentUser(matched);
-      setRoleState(matched.role);
-      try {
-        sounds.playSuccess();
-      } catch {}
-      return matched;
-    }
-
-    // Fallback to demo profiles
-    const roleToUse = preferredRole || (email.includes('tutor') || email.includes('rajesh') ? 'tutor' : 'student');
-    const demoUser: User = {
-      ...MOCK_USERS[roleToUse],
-      email: email || MOCK_USERS[roleToUse].email,
-    };
-    setCurrentUser(demoUser);
-    setRoleState(demoUser.role);
     try {
       sounds.playSuccess();
     } catch {}
-    return demoUser;
+    return user;
   };
 
   const register = async (userData: Partial<User> & { password?: string }): Promise<User> => {
-    const newUser: User = {
-      id: 'u_' + Date.now(),
-      name: userData.name || 'New User',
-      email: userData.email || 'user@example.com',
-      role: userData.role || 'student',
-      avatar: userData.avatar || (userData.role === 'tutor' 
-        ? 'https://picsum.photos/seed/' + Date.now() + '/200/200' 
-        : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'),
-      gradeLevel: userData.gradeLevel,
-      subjects: userData.subjects,
-      hourlyRate: userData.hourlyRate,
-      bio: userData.bio,
-      location: userData.location || 'Nepal',
-      createdAt: new Date().toISOString().split('T')[0],
-    };
+    // Call API client
+    const newUser = await api.register(userData);
 
-    // Store in registered users
+    // Store in registered users local backup
     const savedUsersStr = localStorage.getItem('tutorHubRegisteredUsers');
     const registeredUsers: User[] = savedUsersStr ? JSON.parse(savedUsersStr) : [];
     registeredUsers.push(newUser);
@@ -224,7 +221,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(newUser);
     setRoleState(newUser.role);
 
-    // Send a welcome notification
     addNotification({
       title: `Welcome to Tutor Hub 3D, ${newUser.name}! 🎉`,
       message: newUser.role === 'student' 
@@ -254,7 +250,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!currentUser) return;
     const updated = { ...currentUser, ...updates };
     setCurrentUser(updated);
-    // Update registered list if exists
     const savedUsersStr = localStorage.getItem('tutorHubRegisteredUsers');
     if (savedUsersStr) {
       try {
@@ -265,13 +260,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const addSession = (sessionData: Omit<Session, 'id'>) => {
+  const addSession = async (sessionData: Omit<Session, 'id'>) => {
+    // Create local representation
     const newSession: Session = {
       ...sessionData,
       id: 'session-' + Date.now(),
       studentName: currentUser?.name || 'Alex Johnson',
     };
     setSessions((prev) => [newSession, ...prev]);
+
+    // Async push to backend API
+    api.createBooking(newSession).catch((err) => {
+      console.warn('Backend booking sync warning:', err);
+    });
 
     // Send notification
     addNotification({
@@ -309,7 +310,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isTutorSaved = (id: string) => savedTutorIds.includes(id);
 
-  const addReview = (reviewData: Omit<Review, 'id' | 'date'>) => {
+  const addReview = async (reviewData: Omit<Review, 'id' | 'date'>) => {
     const newReview: Review = {
       ...reviewData,
       id: 'rev-' + Date.now(),
@@ -317,7 +318,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setReviews((prev) => [newReview, ...prev]);
 
-    // Add notification
+    // Async push to backend API
+    api.createReview(newReview).catch((err) => {
+      console.warn('Backend review sync warning:', err);
+    });
+
     addNotification({
       title: 'Review Published ⭐',
       message: `Your ${reviewData.rating}-star review for tutor was submitted successfully. Thank you!`,
@@ -389,6 +394,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateProfile,
         darkMode,
         toggleDarkMode,
+        isServerConnected,
+        refreshServerData,
       }}
     >
       {children}

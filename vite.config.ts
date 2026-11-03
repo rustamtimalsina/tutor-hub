@@ -18,6 +18,19 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
-      }
+      },
+      build: {
+        chunkSizeWarningLimit: 600,
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+              'vendor-three': ['three'],
+              'vendor-charts': ['recharts'],
+              'vendor-ui': ['lucide-react', 'canvas-confetti'],
+            },
+          },
+        },
+      },
     };
 });
