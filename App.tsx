@@ -7,6 +7,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import TutorDashboard from './pages/TutorDashboard';
 import Documentation from './pages/Documentation';
 import Welcome from './pages/Welcome';
+import Auth from './pages/Auth';
 import Classroom from './pages/Classroom';
 import AIAssistantWidget from './components/AIAssistantWidget';
 import { AppProvider } from './context/AppContext';
@@ -76,8 +77,8 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 // Wrapper to conditionally render Navbar & Global AI Widget
 const AppContent: React.FC = () => {
   const location = useLocation();
-  // Hide Navbar on the Welcome screen (root path) and inside live Classroom
-  const showNavbar = location.pathname !== '/' && !location.pathname.startsWith('/classroom');
+  // Hide Navbar on Welcome screen (root path), Auth page, and inside live Classroom
+  const showNavbar = location.pathname !== '/' && location.pathname !== '/auth' && !location.pathname.startsWith('/classroom');
 
   return (
     <>
@@ -85,6 +86,7 @@ const AppContent: React.FC = () => {
       <main className="min-h-screen">
         <Routes>
           <Route path="/" element={<Welcome />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/find-tutors" element={<Home />} />
           <Route path="/tutor/:id" element={<TutorProfile />} />
           <Route path="/student-dashboard" element={<StudentDashboard />} />
@@ -98,16 +100,18 @@ const AppContent: React.FC = () => {
   );
 };
 
-const App: React.FC = () => {
+export function App() {
   return (
     <ErrorBoundary>
       <AppProvider>
         <Router>
-          <AppContent />
+          <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased selection:bg-primary-500 selection:text-white transition-colors duration-200">
+            <AppContent />
+          </div>
         </Router>
       </AppProvider>
     </ErrorBoundary>
   );
-};
+}
 
 export default App;

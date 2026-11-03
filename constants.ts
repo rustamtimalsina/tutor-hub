@@ -1,4 +1,4 @@
-import { Tutor, Session, Subject } from './types';
+import { Tutor, Session, Subject, User, Review, AppNotification } from './types';
 
 export const POPULAR_SUBJECTS: Subject[] = [
   { id: '1', name: 'Mathematics', icon: '📐' },
@@ -112,5 +112,107 @@ export const MOCK_STUDENT_SESSIONS: Session[] = [
     duration: '1 hour',
     price: 1000,
     status: 'Completed',
+  },
+];
+
+export const MOCK_USERS: Record<string, User> = {
+  student: {
+    id: 'u_student_1',
+    name: 'Alex Johnson',
+    email: 'alex@student.edu',
+    role: 'student',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    gradeLevel: 'High School (Grade 11)',
+    bio: 'Aspiring engineer passionate about Mathematics and Physics.',
+    createdAt: '2025-01-15',
+  },
+  tutor: {
+    id: 'u_tutor_1',
+    name: 'Rajesh Sharma',
+    email: 'rajesh@tutorhub.com',
+    role: 'tutor',
+    avatar: 'https://picsum.photos/seed/rajesh/200/200',
+    subjects: ['Mathematics', 'Physics'],
+    hourlyRate: 1500,
+    location: 'Kathmandu, Nepal',
+    bio: 'Experienced educator with 8+ years making STEM accessible and intuitive.',
+    createdAt: '2024-06-20',
+  },
+};
+
+export const MOCK_REVIEWS: Review[] = [
+  {
+    id: 'rev-1',
+    tutorId: '1',
+    authorName: 'Sarah Jenkins',
+    authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+    rating: 5,
+    comment: 'Rajesh explained multivariable calculus clearer than my college professor. The 3D visuals and live whiteboard made everything click!',
+    date: '2 days ago',
+  },
+  {
+    id: 'rev-2',
+    tutorId: '1',
+    authorName: 'Rohan Karki',
+    authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    rating: 5,
+    comment: 'Extremely patient and structured. Helped me score an A in AP Physics Mechanics.',
+    date: '1 week ago',
+  },
+  {
+    id: 'rev-3',
+    tutorId: '1',
+    authorName: 'Aayush Shrestha',
+    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+    rating: 4.8,
+    comment: 'Super punctual and encouraging. Gives great step-by-step homework assignments.',
+    date: '2 weeks ago',
+  },
+  {
+    id: 'rev-4',
+    tutorId: '2',
+    authorName: 'Manisha Sharma',
+    authorAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=80',
+    rating: 5,
+    comment: 'Priya makes physics feel like magic! Her real-world explanations of electromagnetism are top tier.',
+    date: '3 days ago',
+  },
+  {
+    id: 'rev-5',
+    tutorId: '5',
+    authorName: 'David Lee',
+    authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+    rating: 5,
+    comment: 'Bishal helped me build my first full-stack React & TypeScript project. Best coding mentor ever!',
+    date: 'Yesterday',
+  },
+];
+
+export const MOCK_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: 'notif-1',
+    title: 'Session Confirmed! 🚀',
+    message: 'Your Mathematics session with Rajesh Sharma is confirmed for Dec 25 at 10:00 AM.',
+    type: 'booking',
+    time: '10m ago',
+    read: false,
+    link: '/student-dashboard',
+  },
+  {
+    id: 'notif-2',
+    title: 'AI Copilot Ready 💡',
+    message: 'Tutor Hub 3D Copilot is active. Click the bottom-right bubble anytime for 24/7 AI homework assistance.',
+    type: 'system',
+    time: '1h ago',
+    read: false,
+  },
+  {
+    id: 'notif-3',
+    title: 'Upcoming Reminder ⏰',
+    message: 'Physics session with Priya Maharjan begins tomorrow at 2:00 PM.',
+    type: 'reminder',
+    time: '5h ago',
+    read: true,
+    link: '/classroom/s2',
   },
 ];

@@ -162,6 +162,64 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
   });
 });
 
+app.post('/api/auth/register', (req: Request, res: Response) => {
+  const { name, email, role, gradeLevel, hourlyRate, subjects } = req.body;
+  if (!name || !email) {
+    return res.status(400).json({ error: 'Name and email are required.' });
+  }
+
+  const newUser = {
+    id: `usr-${Date.now()}`,
+    name,
+    email,
+    role: role || 'student',
+    gradeLevel,
+    hourlyRate,
+    subjects,
+    createdAt: new Date().toISOString(),
+  };
+
+  res.status(201).json({
+    message: 'Registration successful',
+    token: `jwt-token-${Date.now()}`,
+    user: newUser,
+  });
+});
+
+// Reviews Endpoints
+let reviews: any[] = [
+  {
+    id: 'rev-1',
+    tutorId: '1',
+    authorName: 'Sarah Jenkins',
+    rating: 5,
+    comment: 'Exceptional math instruction and clear calculus whiteboard notes!',
+    date: '2 days ago',
+  },
+];
+
+app.get('/api/reviews/:tutorId', (req: Request, res: Response) => {
+  const tutorReviews = reviews.filter((r) => r.tutorId === req.params.tutorId);
+  res.json({ data: tutorReviews });
+});
+
+app.post('/api/reviews', (req: Request, res: Response) => {
+  const { tutorId, authorName, rating, comment } = req.body;
+  if (!tutorId || !comment) {
+    return res.status(400).json({ error: 'Tutor ID and comment are required.' });
+  }
+  const newRev = {
+    id: `rev-${Date.now()}`,
+    tutorId,
+    authorName: authorName || 'Verified Student',
+    rating: Number(rating) || 5,
+    comment,
+    date: 'Just now',
+  };
+  reviews.unshift(newRev);
+  res.status(201).json({ message: 'Review added', data: newRev });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Tutor Hub API running on http://localhost:${PORT}`);
 });

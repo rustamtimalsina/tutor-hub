@@ -7,7 +7,9 @@ import confetti from 'canvas-confetti';
 
 const TutorDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { sessions } = useApp();
+  const { sessions, currentUser } = useApp();
+  const tutorName = currentUser?.name || 'Rajesh Sharma';
+  const tutorAvatar = currentUser?.avatar || 'https://picsum.photos/seed/rajesh/200/200';
   const [pendingRequests, setPendingRequests] = useState([
     { id: 'req-1', student: 'Sita Karki', subject: 'Advanced Calculus', duration: '1 Hour', fee: 1500, time: 'Tomorrow @ 11:00 AM' },
     { id: 'req-2', student: 'Bikram Thapa', subject: 'Quantum Physics', duration: '2 Hours', fee: 3000, time: 'Wednesday @ 3:00 PM' },
@@ -64,8 +66,8 @@ const TutorDashboard: React.FC = () => {
           <div className="flex items-center gap-5">
             <div className="relative">
               <img
-                src="https://picsum.photos/seed/rajesh/200/200"
-                alt="Rajesh Sharma"
+                src={tutorAvatar}
+                alt={tutorName}
                 className="h-20 w-20 rounded-2xl object-cover border-2 border-primary-200 shadow-md ring-2 ring-primary-50"
               />
               <span className="absolute -bottom-1 -right-1 px-2 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-full uppercase tracking-wider">
@@ -74,13 +76,13 @@ const TutorDashboard: React.FC = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Rajesh Sharma</h1>
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{tutorName}</h1>
                 <span className="bg-primary-50 text-primary-700 text-xs px-2.5 py-0.5 rounded-full font-bold border border-primary-200">
                   Verified Educator
                 </span>
               </div>
               <p className="text-slate-500 text-xs sm:text-sm mt-1 font-medium">
-                Senior Mathematics & Physics Specialist • M.Sc. Tribhuvan University
+                {currentUser?.bio || 'Senior Mathematics & Physics Specialist • M.Sc. Tribhuvan University'}
               </p>
             </div>
           </div>

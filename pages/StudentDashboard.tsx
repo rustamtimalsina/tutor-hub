@@ -7,9 +7,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 const StudentDashboard: React.FC = () => {
-  const { sessions, cancelSession, savedTutorIds, tutors } = useApp();
+  const { sessions, cancelSession, savedTutorIds, tutors, currentUser } = useApp();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'bookings' | 'saved' | 'messages'>('bookings');
+
+  const studentName = currentUser?.name || 'Alex Johnson';
+  const studentInitial = studentName.charAt(0).toUpperCase();
 
   const upcomingSessions = sessions.filter((s) => s.status === 'Upcoming');
   const pastSessions = sessions.filter((s) => s.status !== 'Upcoming');
@@ -21,7 +24,7 @@ const StudentDashboard: React.FC = () => {
     .reduce((acc, curr) => acc + curr.price, 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-16">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-16 transition-colors duration-200">
       
       {/* Dashboard Hero Header */}
       <div className="bg-gradient-to-r from-slate-900 via-primary-950 to-indigo-950 text-white py-10 px-4 sm:px-6 lg:px-8 shadow-xl relative overflow-hidden">
@@ -29,18 +32,26 @@ const StudentDashboard: React.FC = () => {
         
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
           <div className="flex items-center gap-5">
-            <div className="h-20 w-20 rounded-2xl bg-gradient-to-tr from-primary-500 to-indigo-400 text-white flex items-center justify-center text-3xl font-black shadow-lg border-2 border-white/20">
-              A
-            </div>
+            {currentUser?.avatar ? (
+              <img
+                src={currentUser.avatar}
+                alt={studentName}
+                className="h-20 w-20 rounded-2xl object-cover shadow-lg border-2 border-white/20"
+              />
+            ) : (
+              <div className="h-20 w-20 rounded-2xl bg-gradient-to-tr from-primary-500 to-indigo-400 text-white flex items-center justify-center text-3xl font-black shadow-lg border-2 border-white/20">
+                {studentInitial}
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-black tracking-tight">Alex Johnson</h1>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight">{studentName}</h1>
                 <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
                   Active Student
                 </span>
               </div>
               <p className="text-slate-400 text-xs sm:text-sm mt-1">
-                Computer Science & Advanced Mathematics • Grade 12
+                {currentUser?.gradeLevel || 'Computer Science & Advanced Mathematics • Grade 12'}
               </p>
             </div>
           </div>
