@@ -1,0 +1,140 @@
+{
+  "users": [
+    {
+      "id": "u_student_1",
+      "name": "Alex Johnson",
+      "email": "alex@student.edu",
+      "passwordHash": "$2b$10$tirDgl5AGwcE2iT1Vr6dIOr8T7g.082v7RgYycHFDiSHsltvLLXFe",
+      "role": "student",
+      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "gradeLevel": "High School (Grade 11)",
+      "bio": "Aspiring engineer passionate about Mathematics and Physics.",
+      "createdAt": "2025-01-15"
+    },
+    {
+      "id": "u_tutor_1",
+      "name": "Rajesh Sharma",
+      "email": "rajesh@tutorhub.com",
+      "passwordHash": "$2b$10$JmdCsdHI/8WyBq/unbFKGua.qMOIfsa1Y3P5yW8eqxdDgLUbjsKki",
+      "role": "tutor",
+      "avatar": "https://picsum.photos/seed/rajesh/200/200",
+      "subjects": [
+        "Mathematics",
+        "Physics"
+      ],
+      "hourlyRate": 1500,
+      "location": "Kathmandu, Nepal",
+      "bio": "Experienced educator with 8+ years making STEM accessible and intuitive.",
+      "createdAt": "2024-06-20"
+    }
+  ],
+  "tutors": [
+    {
+      "id": "1",
+      "name": "Rajesh Sharma",
+      "avatar": "https://picsum.photos/seed/rajesh/300/300",
+      "subjects": [
+        "Mathematics",
+        "Physics"
+      ],
+      "rating": 4.9,
+      "reviewCount": 38,
+      "price": 1500,
+      "location": "Kathmandu, Bagmati",
+      "experience": "8+ Years",
+      "bio": "Dedicated educator with M.Sc. in Physics. Specialized in calculus, mechanics, and exam preparation for high school & college students.",
+      "availability": "Available",
+      "gradeLevels": [
+        "High School",
+        "College"
+      ]
+    },
+    {
+      "id": "2",
+      "name": "Anita Shrestha",
+      "avatar": "https://picsum.photos/seed/anita/300/300",
+      "subjects": [
+        "Chemistry",
+        "Biology"
+      ],
+      "rating": 4.8,
+      "reviewCount": 29,
+      "price": 1200,
+      "location": "Lalitpur, Bagmati",
+      "experience": "5+ Years",
+      "bio": "Passionate about medical biology and organic chemistry. Simplifying complex molecular reactions for aspiring medical students.",
+      "availability": "Available",
+      "gradeLevels": [
+        "Middle School",
+        "High School",
+        "College"
+      ]
+    },
+    {
+      "id": "3",
+      "name": "Bikash Adhikari",
+      "avatar": "https://picsum.photos/seed/bikash/300/300",
+      "subjects": [
+        "Computer Science",
+        "Mathematics"
+      ],
+      "rating": 5,
+      "reviewCount": 45,
+      "price": 2000,
+      "location": "Pokhara, Gandaki",
+      "experience": "7+ Years",
+      "bio": "Software engineer and coding instructor. Teaching Python, Web Development, Algorithms, and Data Structures.",
+      "availability": "Available",
+      "gradeLevels": [
+        "High School",
+        "College"
+      ]
+    },
+    {
+      "id": "4",
+      "name": "Sunita Gurung",
+      "avatar": "https://picsum.photos/seed/sunita/300/300",
+      "subjects": [
+        "English",
+        "Social Studies"
+      ],
+      "rating": 4.7,
+      "reviewCount": 22,
+      "price": 1000,
+      "location": "Bhaktapur, Bagmati",
+      "experience": "4+ Years",
+      "bio": "Certified IELTS trainer and English literature instructor. Focus on academic writing, fluency, and critical thinking.",
+      "availability": "Available",
+      "gradeLevels": [
+        "Elementary",
+        "Middle School",
+        "High School"
+      ]
+    }
+  ],
+  "bookings": [
+    {
+      "id": "b-1",
+      "tutorName": "Rajesh Sharma",
+      "studentName": "Alex Johnson",
+      "subject": "Mathematics",
+      "date": "Tomorrow",
+      "time": "10:00 AM",
+      "duration": "1 Hour",
+      "price": 1500,
+      "status": "Upcoming",
+      "escrowStatus": "Held",
+      "createdAt": "2026-11-03T03:41:32.361Z"
+    }
+  ],
+  "reviews": [
+    {
+      "id": "rev-1",
+      "tutorId": "1",
+      "authorName": "Sarah Jenkins",
+      "rating": 5,
+      "comment": "Exceptional math instruction and clear calculus whiteboard notes!",
+      "date": "2 days ago"
+    }
+  ]
+}
