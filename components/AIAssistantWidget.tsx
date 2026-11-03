@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Bot, X, Sparkles, Send, MessageSquare, BookOpen, HelpCircle, ArrowRight, Video } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { sounds } from '../utils/soundEffects';
+import { api } from '../services/api';
 
 interface AIMsg {
   role: 'user' | 'assistant';
@@ -33,35 +34,31 @@ const AIAssistantWidget: React.FC = () => {
     navigate('/classroom/s1');
   };
 
-  const handleSend = (userQuery?: string) => {
+  const handleSend = async (userQuery?: string) => {
     const q = userQuery || input;
     if (!q.trim()) return;
 
-    sounds.playClick();
+    try { sounds.playClick(); } catch {}
     setMessages((prev) => [...prev, { role: 'user', text: q }]);
     setInput('');
     setLoading(true);
 
-    setTimeout(() => {
-      let reply = '';
+    try {
       const lower = q.toLowerCase();
-
+      let reply = '';
       if (lower.includes('classroom') || lower.includes('demo') || lower.includes('whiteboard') || lower.includes('video')) {
         reply = "🚀 Live 1-on-1 Classroom is ready! It includes the interactive whiteboard, dual video feeds, and in-call AI tutor. Click the button below to jump straight into the room:";
-      } else if (lower.includes('math') || lower.includes('calculus') || lower.includes('physics')) {
-        reply = "🎯 For Mathematics & Physics, Rajesh Sharma (M.Sc., 8+ yrs experience, 4.9⭐ rating) is our top-rated mentor at NPR 1,500/hr. You can book him directly with Khalti or eSewa!";
-      } else if (lower.includes('computer') || lower.includes('code') || lower.includes('python')) {
-        reply = "💻 Bikash Adhikari specializes in Computer Science, Python, and Web Development with a perfect 5.0⭐ rating!";
-      } else if (lower.includes('payment') || lower.includes('esewa') || lower.includes('khalti')) {
-        reply = "💳 We support instant Khalti, eSewa, and International Credit Card payments with secure escrow protection until your lesson completes!";
       } else {
-        reply = `I can help you match with verified educators, explain study syllabuses, or guide you into the live interactive classroom! What subject are you preparing for?`;
+        reply = await api.askCopilot(q, 'General Mentorship');
       }
 
-      sounds.playMessage();
+      try { sounds.playMessage(); } catch {}
       setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: 'assistant', text: "I'm ready to help you find verified mentors or test our live 3D classroom!" }]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (

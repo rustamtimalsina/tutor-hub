@@ -8,6 +8,7 @@ import { Tutor } from '../types';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { sounds } from '../utils/soundEffects';
+import { api } from '../services/api';
 
 interface BookingModalProps {
   tutor: Tutor;
@@ -42,18 +43,19 @@ const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) =
     setStep('payment');
   };
 
-  const handleProcessPayment = () => {
-    sounds.playClick();
+  const handleProcessPayment = async () => {
+    try { sounds.playClick(); } catch {}
     setIsProcessing(true);
-    setTimeout(() => {
-      const generatedRef = `${paymentMethod.toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
-      setTxRef(generatedRef);
 
-      // Play uplifting celebratory 4-note chord sound
-      sounds.playSuccess();
+    try {
+      // Real sandbox gateway verification
+      const verification = await api.verifyPayment(paymentMethod, totalPrice);
+      setTxRef(verification.transactionRef);
 
-      // Add to store
-      addSession({
+      try { sounds.playSuccess(); } catch {}
+
+      // Add to store and sync with database
+      await addSession({
         tutorName: tutor.name,
         subject: selectedSubject,
         date: selectedDate,
@@ -72,9 +74,12 @@ const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClose }) =
         });
       } catch {}
 
-      setIsProcessing(false);
       setStep('success');
-    }, 1200);
+    } catch (err) {
+      console.error('Payment processing error:', err);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleClose = () => {

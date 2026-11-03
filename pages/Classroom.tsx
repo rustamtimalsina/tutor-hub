@@ -4,9 +4,12 @@ import {
   Mic, MicOff, Video, VideoOff, ScreenShare, PhoneOff, 
   PenTool, Eraser, RotateCcw, Download, MessageSquare, 
   FileText, Users, Sparkles, Send, CheckCircle2, Sliders,
-  Bot, HelpCircle, Lightbulb, Compass, Play, Layout, MessageCircle
+  Bot, HelpCircle, Lightbulb, Compass, Play, Layout, MessageCircle,
+  Wifi, WifiOff
 } from 'lucide-react';
+import { io, Socket } from 'socket.io-client';
 import { useApp } from '../context/AppContext';
+import { api } from '../services/api';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/soundEffects';
 
@@ -24,7 +27,7 @@ interface AIMessage {
 const Classroom: React.FC = () => {
   const { sessionId } = useParams();
   const navigate = useNavigate();
-  const { sessions, role } = useApp();
+  const { sessions, role, currentUser } = useApp();
 
   const session = (Array.isArray(sessions) ? sessions.find((s) => s && s.id === sessionId) : null) || {
     id: sessionId || 's1',
@@ -59,6 +62,11 @@ const Classroom: React.FC = () => {
   const [penWidth, setPenWidth] = useState(4);
   const [isEraser, setIsEraser] = useState(false);
   const [showThickness, setShowThickness] = useState(false);
+
+  // Socket.io Real-Time Connection
+  const socketRef = useRef<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [activePeers, setActivePeers] = useState<number>(1);
 
   // Smooth drawing points buffer
   const pointsRef = useRef<Point[]>([]);
@@ -101,7 +109,7 @@ const Classroom: React.FC = () => {
 
   // Real Camera Activation
   const toggleCamera = async () => {
-    sounds.playToggle(!videoOn);
+    try { sounds.playToggle(!videoOn); } catch {}
     if (videoOn && hasWebcam && localStream) {
       localStream.getVideoTracks().forEach((track) => track.stop());
       setLocalStream(null);
@@ -126,7 +134,7 @@ const Classroom: React.FC = () => {
   };
 
   const toggleScreenShare = async () => {
-    sounds.playToggle(!screenSharing);
+    try { sounds.playToggle(!screenSharing); } catch {}
     if (!screenSharing) {
       try {
         const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
@@ -187,6 +195,92 @@ const Classroom: React.FC = () => {
     drawGrid(ctx, rect.width, rect.height);
   }, [drawGrid, mobileTab]);
 
+  // ----------------------------------------------------
+  // Real-Time Socket.io Connection & Listeners
+  // ----------------------------------------------------
+  useEffect(() => {
+    const socket = io('http://localhost:5000', {
+      transports: ['websocket', 'polling'],
+      timeout: 5000,
+    });
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      setIsConnected(true);
+      socket.emit('join-room', {
+        roomId: sessionId || 's1',
+        userName: currentUser?.name || (role === 'tutor' ? 'Rajesh Sharma' : 'Alex Johnson'),
+        role: role || 'student',
+      });
+    });
+
+    socket.on('disconnect', () => {
+      setIsConnected(false);
+    });
+
+    socket.on('user-joined', (peer) => {
+      setActivePeers((prev) => prev + 1);
+      setChatMessages((prev) => [
+        ...prev,
+        { sender: 'System', text: `🟢 ${peer.userName} (${peer.role}) joined the live classroom.`, time: peer.time },
+      ]);
+      try { sounds.playJoinCall(); } catch {}
+    });
+
+    socket.on('user-left', () => {
+      setActivePeers((prev) => Math.max(1, prev - 1));
+    });
+
+    // Remote stroke from peer
+    socket.on('draw-stroke', (data) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.strokeStyle = data.isEraser ? '#ffffff' : data.color;
+      ctx.lineWidth = data.isEraser ? data.width * 5 : data.width;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.moveTo(data.x0, data.y0);
+      ctx.lineTo(data.x1, data.y1);
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // Remote whiteboard clear
+    socket.on('clear-whiteboard', () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      const rect = canvas.getBoundingClientRect();
+      drawGrid(ctx, rect.width, rect.height);
+    });
+
+    // Remote chat
+    socket.on('receive-chat', (msg) => {
+      setChatMessages((prev) => [...prev, msg]);
+      try { sounds.playMessage(); } catch {}
+    });
+
+    // Remote reaction
+    socket.on('receive-reaction', (data) => {
+      triggerReaction(data.emoji, false);
+    });
+
+    // Remote shared notes update
+    socket.on('receive-notes', (notesText) => {
+      setSharedNotes(notesText);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [sessionId, role, currentUser, drawGrid]);
+
   const getCoordinates = (e: React.PointerEvent<HTMLCanvasElement>): Point | null => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
@@ -231,19 +325,30 @@ const Classroom: React.FC = () => {
     const pts = pointsRef.current;
     if (pts.length < 2) return;
 
+    const p1 = pts[pts.length - 2];
+    const p2 = pts[pts.length - 1];
+    const midPoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+
     ctx.beginPath();
     ctx.strokeStyle = isEraser ? '#ffffff' : penColor;
     ctx.lineWidth = isEraser ? penWidth * 5 : penWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    const p1 = pts[pts.length - 2];
-    const p2 = pts[pts.length - 1];
-    const midPoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-
     ctx.moveTo(p1.x, p1.y);
     ctx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
     ctx.stroke();
+
+    // Broadcast stroke to peers in room
+    socketRef.current?.emit('draw-stroke', {
+      x0: p1.x,
+      y0: p1.y,
+      x1: midPoint.x,
+      y1: midPoint.y,
+      color: penColor,
+      width: penWidth,
+      isEraser,
+    });
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -256,17 +361,20 @@ const Classroom: React.FC = () => {
   };
 
   const clearCanvas = () => {
-    sounds.playPop();
+    try { sounds.playPop(); } catch {}
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const rect = canvas.getBoundingClientRect();
     drawGrid(ctx, rect.width, rect.height);
+
+    // Broadcast clear
+    socketRef.current?.emit('clear-whiteboard');
   };
 
   const downloadCanvas = () => {
-    sounds.playClick();
+    try { sounds.playClick(); } catch {}
     const canvas = canvasRef.current;
     if (!canvas) return;
     const url = canvas.toDataURL('image/png');
@@ -279,19 +387,26 @@ const Classroom: React.FC = () => {
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
-    sounds.playClick();
-    setChatMessages((prev) => [
-      ...prev,
-      { sender: 'You', text: inputText, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
-    ]);
+    try { sounds.playClick(); } catch {}
+
+    const myName = currentUser?.name || (role === 'tutor' ? 'Rajesh Sharma' : 'Alex Johnson');
+    const msg = {
+      sender: myName,
+      text: inputText.trim(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    // Emit to room
+    socketRef.current?.emit('send-chat', msg);
     setInputText('');
   };
 
-  const handleAskAI = (promptText?: string) => {
+  // Real AI Copilot calling Backend
+  const handleAskAI = async (promptText?: string) => {
     const query = promptText || aiInput;
     if (!query.trim()) return;
 
-    sounds.playClick();
+    try { sounds.playClick(); } catch {}
 
     const userMsg: AIMessage = {
       role: 'user',
@@ -303,21 +418,9 @@ const Classroom: React.FC = () => {
     setAiInput('');
     setAiLoading(true);
 
-    setTimeout(() => {
-      let response = '';
-      const lower = query.toLowerCase();
-
-      if (lower.includes('chain rule') || lower.includes('derivative')) {
-        response = `💡 **Chain Rule Breakdown:**\nIf $y = f(g(x))$, then $\\frac{dy}{dx} = f'(g(x)) \\cdot g'(x)$.\n\n**Example:** To differentiate $\\sin(3x^2)$:\n1. Outer function: $f(u) = \\sin(u) \\rightarrow f'(u) = \\cos(u)$\n2. Inner function: $g(x) = 3x^2 \\rightarrow g'(x) = 6x$\n3. Result: $6x \\cdot \\cos(3x^2)$.`;
-      } else if (lower.includes('question') || lower.includes('practice') || lower.includes('quiz')) {
-        response = `📝 **Quick Practice Challenge:**\nFind the derivative of $f(x) = (4x^3 - 2x)^5$.\n\n*Hint:* Apply the power rule to the outside bracket first, then multiply by the derivative of the inside polynomial! Try working it out on your whiteboard!`;
-      } else if (lower.includes('summary') || lower.includes('takeaway')) {
-        response = `🎯 **Session Key Takeaways:**\n- Always identify the "outer" and "inner" functions before differentiating.\n- Don't forget the negative sign when differentiating cosine: $\\frac{d}{dx}[\\cos(x)] = -\\sin(x)$.\n- Verify critical points where $f'(x) = 0$ for local maxima/minima.`;
-      } else {
-        response = `Great question on ${session.subject}! Remember to check dimensional units and break complex problems into 2-step modular equations. Ask your mentor ${session.tutorName} to sketch the graph on the whiteboard!`;
-      }
-
-      sounds.playMessage();
+    try {
+      const response = await api.askCopilot(query, session.subject, session.tutorName);
+      try { sounds.playMessage(); } catch {}
 
       setAiMessages((prev) => [
         ...prev,
@@ -327,21 +430,39 @@ const Classroom: React.FC = () => {
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
+    } catch {
+      setAiMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: "I'm ready to help! Review your problem statement and let's solve it step by step on the whiteboard.",
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+    } finally {
       setAiLoading(false);
-    }, 700);
+    }
   };
 
-  const triggerReaction = (emoji: string) => {
-    sounds.playPop();
+  const triggerReaction = (emoji: string, broadcast = true) => {
+    try { sounds.playPop(); } catch {}
     setReaction(emoji);
     try {
       confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
     } catch {}
+    if (broadcast) {
+      socketRef.current?.emit('send-reaction', { emoji });
+    }
     setTimeout(() => setReaction(null), 2500);
   };
 
+  const handleNotesChange = (text: string) => {
+    setSharedNotes(text);
+    socketRef.current?.emit('update-notes', text);
+  };
+
   const handleEndSession = () => {
-    sounds.playLeaveCall();
+    try { sounds.playLeaveCall(); } catch {}
     const targetDashboard = role === 'tutor' ? '/tutor-dashboard' : '/student-dashboard';
     navigate(targetDashboard);
   };
@@ -349,374 +470,349 @@ const Classroom: React.FC = () => {
   return (
     <div className="h-screen flex flex-col bg-slate-900 text-white overflow-hidden select-none">
       
-      {/* Top Header Bar (Fully Mobile Responsive) */}
+      {/* Top Header Bar */}
       <header className="h-14 sm:h-16 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 px-3 sm:px-6 flex items-center justify-between z-30 flex-shrink-0">
         
-        {/* Title */}
+        {/* Title & Connection Status */}
         <div className="flex items-center gap-2 sm:gap-3 truncate">
           <div className="p-1.5 sm:p-2 bg-gradient-to-tr from-primary-600 to-indigo-600 rounded-xl shadow-md flex-shrink-0">
             <Video className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
           <div className="truncate">
-            <h1 className="font-black text-xs sm:text-sm text-white flex items-center gap-1.5 truncate">
-              <span className="truncate">{session.subject}</span>
-              <span className="hidden sm:inline-block bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded-full font-bold">
-                Live HD
+            <div className="flex items-center gap-2">
+              <h1 className="text-xs sm:text-base font-black text-white truncate">
+                {session.subject} Classroom
+              </h1>
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1 ${
+                isConnected ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+              }`}>
+                {isConnected ? <Wifi className="h-2.5 w-2.5" /> : <WifiOff className="h-2.5 w-2.5" />}
+                {isConnected ? `P2P Live (${activePeers})` : 'Offline Mode'}
               </span>
-            </h1>
-            <p className="text-[10px] sm:text-xs text-slate-400 truncate hidden xs:block">Mentor: {session.tutorName}</p>
+            </div>
+            <p className="text-[10px] sm:text-xs text-slate-400 truncate">
+              Mentor: {session.tutorName}
+            </p>
           </div>
         </div>
 
-        {/* Center: Live Timer & AI Pill */}
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          <div className="bg-slate-900 border border-slate-800 px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full flex items-center gap-1.5 text-[11px] sm:text-xs font-mono font-bold text-emerald-400 shadow-inner">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-            <span>{formatTimer(secondsElapsed)}</span>
-          </div>
+        {/* Live Timer */}
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-slate-800/80 rounded-full border border-slate-700 text-xs font-mono font-bold text-slate-300">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>{formatTimer(secondsElapsed)}</span>
+        </div>
 
+        {/* Mobile View Toggle */}
+        <div className="flex md:hidden items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
           <button
-            onClick={() => {
-              sounds.playClick();
-              setActiveTab('ai');
-              setMobileTab('chat');
-            }}
-            className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition-all border ${
-              activeTab === 'ai'
-                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-md scale-105'
-                : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
+            onClick={() => setMobileTab('canvas')}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+              mobileTab === 'canvas' ? 'bg-primary-600 text-white' : 'text-slate-400'
             }`}
           >
-            <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline">AI Copilot ✨</span>
+            Board
+          </button>
+          <button
+            onClick={() => setMobileTab('chat')}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+              mobileTab === 'chat' ? 'bg-primary-600 text-white' : 'text-slate-400'
+            }`}
+          >
+            Chat & AI
           </button>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          <button
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
+          <button 
             onClick={downloadCanvas}
-            className="p-2 sm:px-3.5 sm:py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-colors"
-            title="Download Whiteboard"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-all shadow-sm"
           >
-            <Download className="h-4 w-4" />
-            <span className="hidden md:inline ml-1.5">Save Notes</span>
+            <Download className="h-3.5 w-3.5" /> Save Notes
           </button>
-          <button
+          <button 
             onClick={handleEndSession}
-            className="flex items-center gap-1 px-3 py-1.5 sm:px-4 sm:py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black shadow-lg shadow-rose-600/30 transition-all hover:scale-105"
+            className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-lg shadow-rose-600/30 transition-all hover:scale-105 active:scale-95"
           >
-            <PhoneOff className="h-3.5 w-3.5" />
+            <PhoneOff className="h-3.5 w-3.5" /> 
             <span className="hidden sm:inline">End Call</span>
           </button>
         </div>
       </header>
 
-      {/* Mobile Mode Switcher Bar (< md only) */}
-      <div className="md:hidden bg-slate-950 border-b border-slate-800 px-3 py-1.5 flex gap-2 flex-shrink-0">
-        <button
-          onClick={() => {
-            sounds.playClick();
-            setMobileTab('canvas');
-          }}
-          className={`flex-1 py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-            mobileTab === 'canvas' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <Layout className="h-3.5 w-3.5" /> Whiteboard & Call
-        </button>
-        <button
-          onClick={() => {
-            sounds.playClick();
-            setMobileTab('chat');
-          }}
-          className={`flex-1 py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-            mobileTab === 'chat' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          <MessageCircle className="h-3.5 w-3.5" /> Chat & AI {activeTab === 'ai' ? '✨' : ''}
-        </button>
-      </div>
-
-      {/* Main Workspace */}
+      {/* Main Workspace Grid */}
       <div className="flex-1 flex overflow-hidden relative">
         
-        {/* Left: Video Feeds & Canvas */}
-        <div className={`flex-1 flex flex-col p-2 sm:p-4 gap-2 sm:gap-4 overflow-hidden ${
-          mobileTab === 'chat' ? 'hidden md:flex' : 'flex'
-        }`}>
+        {/* Left Area: Videos + Whiteboard */}
+        <div className={`flex-1 flex flex-col p-2 sm:p-4 gap-2 sm:gap-4 overflow-hidden ${mobileTab === 'chat' ? 'hidden md:flex' : 'flex'}`}>
           
-          {/* Video Feeds Grid */}
-          <div className="h-28 sm:h-40 grid grid-cols-2 gap-2 sm:gap-4 flex-shrink-0">
+          {/* Dual Video Stream Bar */}
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 h-32 sm:h-44 md:h-48 flex-shrink-0">
             
-            {/* Tutor Video */}
-            <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden relative shadow-lg">
-              <img
-                src="https://picsum.photos/seed/rajesh/600/400"
-                alt="Tutor Feed"
-                className="w-full h-full object-cover"
+            {/* Remote Tutor Video Feed */}
+            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 shadow-md group">
+              <img 
+                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80" 
+                alt="Tutor"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-md px-2 py-0.5 sm:px-3 sm:py-1 rounded-xl text-[10px] sm:text-xs font-bold text-white flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                <span className="truncate">{session.tutorName}</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold text-white border border-white/10">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="truncate">{session.tutorName} (Tutor)</span>
               </div>
-              {reaction && (
-                <div className="absolute top-2 right-2 text-3xl animate-bounce">
-                  {reaction}
-                </div>
-              )}
             </div>
 
-            {/* Student Video */}
-            <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden relative shadow-lg flex items-center justify-center">
+            {/* Local Student Video Feed */}
+            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 shadow-md flex items-center justify-center">
               {hasWebcam && videoOn ? (
-                <video
-                  ref={userVideoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover scale-x-[-1]"
+                <video 
+                  ref={userVideoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted 
+                  className="w-full h-full object-cover transform -scale-x-100"
                 />
-              ) : videoOn ? (
-                <div className="w-full h-full bg-gradient-to-tr from-slate-900 to-indigo-950 flex flex-col items-center justify-center text-center p-2">
-                  <div className="h-10 w-10 sm:h-14 sm:w-14 rounded-full bg-primary-600 flex items-center justify-center text-lg sm:text-2xl font-black text-white shadow-lg mb-1">
-                    A
-                  </div>
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-300">You</span>
-                </div>
               ) : (
-                <div className="text-center text-slate-500 text-[10px] sm:text-xs">
-                  <VideoOff className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-1 text-slate-600" />
-                  Camera off
+                <div className="flex flex-col items-center justify-center text-slate-400">
+                  <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-full bg-primary-600/30 text-primary-300 flex items-center justify-center text-xl sm:text-2xl font-black mb-1 border border-primary-500/30 shadow-inner">
+                    {(currentUser?.name || 'Alex').charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-semibold text-slate-300">
+                    {currentUser?.name || 'Alex Johnson'} (You)
+                  </span>
+                  <span className="text-[9px] text-slate-500">Camera Off</span>
                 </div>
               )}
-              <div className="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur-md px-2 py-0.5 sm:px-3 sm:py-1 rounded-xl text-[10px] sm:text-xs font-bold text-white flex items-center gap-1.5">
-                <span className={`h-1.5 w-1.5 rounded-full ${micOn ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                You {micOn ? '' : '(Muted)'}
+              <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold text-white border border-white/10">
+                <span className={`h-2 w-2 rounded-full ${micOn ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                <span>You</span>
               </div>
             </div>
+
           </div>
 
-          {/* Whiteboard Canvas Container */}
-          <div className="flex-1 bg-white rounded-2xl sm:rounded-3xl overflow-hidden relative border border-slate-800 shadow-2xl flex flex-col min-h-0">
+          {/* Collaborative Whiteboard Canvas Container */}
+          <div className="flex-1 relative rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800 shadow-2xl bg-white flex flex-col">
             
-            {/* Whiteboard Floating Toolbar (Scrollable on small mobile) */}
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-slate-700/80 shadow-2xl flex items-center gap-2 max-w-[95vw] overflow-x-auto no-scrollbar">
+            {/* Whiteboard Floating Toolbar */}
+            <div className="absolute top-2 sm:top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 bg-slate-950/90 backdrop-blur-xl rounded-2xl border border-slate-800 shadow-2xl max-w-[95%] overflow-x-auto no-scrollbar">
               
-              {/* Palette */}
-              <div className="flex items-center gap-1.5 pr-2 border-r border-slate-700 flex-shrink-0">
-                {['#7c3aed', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#0f172a'].map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => {
-                      sounds.playClick();
-                      setPenColor(c);
-                      setIsEraser(false);
-                    }}
-                    style={{ backgroundColor: c }}
-                    className={`h-4 w-4 sm:h-5 sm:w-5 rounded-full transition-transform flex-shrink-0 ${
-                      penColor === c && !isEraser ? 'scale-125 ring-2 ring-white' : 'hover:scale-110'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {/* Tools */}
-              <div className="flex items-center gap-1.5 pr-2 border-r border-slate-700 flex-shrink-0">
+              {/* Color Palette */}
+              {['#7c3aed', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#1e293b'].map((color) => (
                 <button
+                  key={color}
+                  type="button"
                   onClick={() => {
-                    sounds.playClick();
+                    setPenColor(color);
                     setIsEraser(false);
+                    try { sounds.playClick(); } catch {}
                   }}
-                  className={`p-1.5 rounded-xl transition-colors ${
-                    !isEraser ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                  className={`h-5 w-5 sm:h-6 sm:w-6 rounded-full border-2 transition-transform ${
+                    penColor === color && !isEraser
+                      ? 'scale-125 border-white shadow-md'
+                      : 'border-transparent hover:scale-110'
                   }`}
-                  title="Draw Pen"
-                >
-                  <PenTool className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    setIsEraser(true);
-                  }}
-                  className={`p-1.5 rounded-xl transition-colors ${
-                    isEraser ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-                  }`}
-                  title="Eraser"
-                >
-                  <Eraser className="h-3.5 w-3.5" />
-                </button>
-                <div className="relative">
-                  <button
-                    onClick={() => setShowThickness(!showThickness)}
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-white transition-colors"
-                    title="Stroke Width"
-                  >
-                    <Sliders className="h-3.5 w-3.5" />
-                  </button>
-                  {showThickness && (
-                    <div className="absolute top-10 -left-6 bg-slate-900 border border-slate-700 p-3 rounded-2xl shadow-xl w-36 z-30">
-                      <span className="text-[10px] text-slate-400 font-bold block mb-1">Thickness: {penWidth}px</span>
-                      <input 
-                        type="range" 
-                        min="2" 
-                        max="16" 
-                        value={penWidth} 
-                        onChange={(e) => setPenWidth(Number(e.target.value))}
-                        className="w-full accent-primary-500 cursor-pointer"
-                      />
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={clearCanvas}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-rose-400 transition-colors"
-                  title="Clear Whiteboard"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                </button>
-              </div>
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
 
-              {/* Quick Reactions */}
-              <div className="flex items-center gap-0.5 flex-shrink-0">
-                {['👍', '💡', '🔥', '👏'].map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => triggerReaction(emoji)}
-                    className="p-1 hover:scale-125 transition-transform text-xs sm:text-sm"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
+              <div className="h-4 w-[1px] bg-slate-800 mx-1 flex-shrink-0" />
+
+              {/* Pen Tool */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEraser(false);
+                  try { sounds.playClick(); } catch {}
+                }}
+                className={`p-1.5 rounded-xl transition-all ${
+                  !isEraser ? 'bg-primary-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                }`}
+                title="Pen"
+              >
+                <PenTool className="h-4 w-4" />
+              </button>
+
+              {/* Eraser Tool */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEraser(true);
+                  try { sounds.playClick(); } catch {}
+                }}
+                className={`p-1.5 rounded-xl transition-all ${
+                  isEraser ? 'bg-primary-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                }`}
+                title="Eraser"
+              >
+                <Eraser className="h-4 w-4" />
+              </button>
+
+              {/* Clear Canvas */}
+              <button
+                type="button"
+                onClick={clearCanvas}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                title="Clear Whiteboard"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+
+              <div className="h-4 w-[1px] bg-slate-800 mx-1 flex-shrink-0" />
+
+              {/* Live Emoji Reactions */}
+              {['👍', '💡', '🔥', '👏'].map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => triggerReaction(emoji)}
+                  className="p-1 hover:scale-125 active:scale-95 transition-transform text-sm sm:text-base"
+                >
+                  {emoji}
+                </button>
+              ))}
 
             </div>
 
-            {/* High-DPI Smooth Canvas */}
+            {/* Floating Reaction Overlay */}
+            {reaction && (
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-30 animate-in zoom-in-50 duration-200">
+                <span className="text-7xl sm:text-9xl drop-shadow-2xl animate-bounce">{reaction}</span>
+              </div>
+            )}
+
+            {/* Canvas */}
             <canvas
               ref={canvasRef}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
-              className="w-full h-full cursor-crosshair touch-none"
+              className="w-full h-full cursor-crosshair touch-none bg-white block"
             />
-          </div>
 
-          {/* Bottom Call Controls */}
-          <div className="h-14 sm:h-16 bg-slate-950/80 backdrop-blur-md rounded-2xl border border-slate-800 px-4 flex items-center justify-center gap-3 sm:gap-4 flex-shrink-0">
-            <button
-              onClick={() => {
-                sounds.playToggle(!micOn);
-                setMicOn(!micOn);
-              }}
-              className={`p-2.5 sm:p-3 rounded-2xl transition-all ${
-                micOn ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-rose-600 text-white shadow-lg'
-              }`}
-              title={micOn ? 'Mute Mic' : 'Unmute Mic'}
-            >
-              {micOn ? <Mic className="h-4 w-4 sm:h-5 sm:w-5" /> : <MicOff className="h-4 w-4 sm:h-5 sm:w-5" />}
-            </button>
-            <button
-              onClick={toggleCamera}
-              className={`p-2.5 sm:p-3 rounded-2xl transition-all ${
-                videoOn ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-rose-600 text-white shadow-lg'
-              }`}
-              title={videoOn ? 'Turn Camera Off' : 'Turn Camera On'}
-            >
-              {videoOn ? <Video className="h-4 w-4 sm:h-5 sm:w-5" /> : <VideoOff className="h-4 w-4 sm:h-5 sm:w-5" />}
-            </button>
-            <button
-              onClick={toggleScreenShare}
-              className={`p-2.5 sm:p-3 rounded-2xl transition-all ${
-                screenSharing ? 'bg-primary-600 text-white shadow-lg' : 'bg-slate-800 text-white hover:bg-slate-700'
-              }`}
-              title="Share Screen"
-            >
-              <ScreenShare className="h-4 w-4 sm:h-5 sm:w-5" />
-            </button>
+            {/* Bottom Hardware Controls Pill */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 p-1.5 bg-slate-950/85 backdrop-blur-xl rounded-2xl border border-slate-800 shadow-xl">
+              <button
+                onClick={() => {
+                  try { sounds.playToggle(!micOn); } catch {}
+                  setMicOn(!micOn);
+                }}
+                className={`p-2 rounded-xl transition-all ${
+                  micOn ? 'bg-slate-800 text-white' : 'bg-rose-600 text-white'
+                }`}
+                title={micOn ? 'Mute Mic' : 'Unmute Mic'}
+              >
+                {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+              </button>
+
+              <button
+                onClick={toggleCamera}
+                className={`p-2 rounded-xl transition-all ${
+                  videoOn ? 'bg-slate-800 text-white' : 'bg-rose-600 text-white'
+                }`}
+                title={videoOn ? 'Turn off camera' : 'Turn on camera'}
+              >
+                {videoOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+              </button>
+
+              <button
+                onClick={toggleScreenShare}
+                className={`p-2 rounded-xl transition-all ${
+                  screenSharing ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-white'
+                }`}
+                title="Share Screen"
+              >
+                <ScreenShare className="h-4 w-4" />
+              </button>
+            </div>
+
           </div>
 
         </div>
 
-        {/* Right Sidebar: Chat, Notes & AI Copilot */}
-        <aside className={`w-full md:w-80 lg:w-96 bg-slate-950 border-l border-slate-800 flex flex-col ${
-          mobileTab === 'canvas' ? 'hidden md:flex' : 'flex'
-        }`}>
+        {/* Right Sidebar: Tabs for Chat, Shared Notes & AI Copilot */}
+        <aside className={`w-full md:w-80 lg:w-96 bg-slate-950 border-l border-slate-800 flex flex-col z-20 ${mobileTab === 'canvas' ? 'hidden md:flex' : 'flex'}`}>
           
-          {/* Tabs */}
-          <div className="p-2 sm:p-3 border-b border-slate-800 flex gap-1.5 flex-shrink-0">
+          {/* Sub-tabs header */}
+          <div className="p-2 sm:p-3 bg-slate-900 border-b border-slate-800 flex gap-1 flex-shrink-0">
             <button
-              onClick={() => {
-                sounds.playClick();
-                setActiveTab('chat');
-              }}
-              className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all ${
-                activeTab === 'chat' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+              onClick={() => setActiveTab('chat')}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === 'chat'
+                  ? 'bg-primary-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
             >
-              <MessageSquare className="h-3.5 w-3.5" /> Chat
+              <MessageSquare className="h-3.5 w-3.5" /> Live Chat
             </button>
             <button
-              onClick={() => {
-                sounds.playClick();
-                setActiveTab('notes');
-              }}
-              className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all ${
-                activeTab === 'notes' ? 'bg-primary-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+              onClick={() => setActiveTab('notes')}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === 'notes'
+                  ? 'bg-primary-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
             >
               <FileText className="h-3.5 w-3.5" /> Notes
             </button>
             <button
-              onClick={() => {
-                sounds.playClick();
-                setActiveTab('ai');
-              }}
-              className={`flex-1 py-2 text-xs font-bold rounded-xl flex items-center justify-center gap-1 transition-all ${
-                activeTab === 'ai' ? 'bg-gradient-to-r from-amber-500 to-primary-600 text-white shadow-md' : 'text-amber-400 hover:text-amber-300'
+              onClick={() => setActiveTab('ai')}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                activeTab === 'ai'
+                  ? 'bg-gradient-to-r from-primary-600 to-indigo-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
             >
-              <Bot className="h-3.5 w-3.5" /> AI Copilot
+              <Bot className="h-3.5 w-3.5 text-amber-300" /> AI Copilot
             </button>
           </div>
 
-          {/* TAB 1: Live Chat */}
+          {/* TAB 1: Real-Time Chat */}
           {activeTab === 'chat' && (
-            <div className="flex-1 flex flex-col justify-between p-3 sm:p-4 overflow-hidden">
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
-                {chatMessages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex flex-col ${msg.sender === 'You' ? 'items-end' : 'items-start'}`}
-                  >
-                    <span className="text-[10px] text-slate-500 font-semibold mb-1">
-                      {msg.sender} • {msg.time}
-                    </span>
-                    <div
-                      className={`p-3 rounded-2xl max-w-[85%] leading-relaxed ${
-                        msg.sender === 'You'
-                          ? 'bg-primary-600 text-white font-medium rounded-tr-none'
-                          : 'bg-slate-800 text-slate-200 rounded-tl-none'
-                      }`}
-                    >
-                      {msg.text}
+            <div className="flex-1 flex flex-col justify-between overflow-hidden p-3 sm:p-4">
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {chatMessages.map((msg, idx) => {
+                  const isYou = msg.sender === 'You' || msg.sender === currentUser?.name;
+                  const isSystem = msg.sender === 'System';
+
+                  if (isSystem) {
+                    return (
+                      <div key={idx} className="text-center my-2 text-[10px] text-emerald-400 font-bold bg-emerald-500/10 py-1 px-3 rounded-full border border-emerald-500/20">
+                        {msg.text}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={idx} className={`flex flex-col ${isYou ? 'items-end' : 'items-start'}`}>
+                      <span className="text-[10px] text-slate-500 font-medium mb-1">
+                        {msg.sender} • {msg.time}
+                      </span>
+                      <div className={`p-3 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
+                        isYou
+                          ? 'bg-primary-600 text-white rounded-br-none'
+                          : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'
+                      }`}>
+                        {msg.text}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              <form onSubmit={handleSendMessage} className="pt-3 border-t border-slate-800 flex gap-2 flex-shrink-0">
+              <form onSubmit={handleSendMessage} className="pt-3 border-t border-slate-800 flex gap-2">
                 <input
                   type="text"
-                  placeholder="Ask a question..."
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-primary-500 font-medium"
+                  placeholder="Ask a question in call..."
+                  className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-primary-500"
                 />
                 <button
                   type="submit"
-                  className="p-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-md transition-colors"
+                  className="p-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl shadow-md transition-all flex items-center justify-center"
                 >
                   <Send className="h-4 w-4" />
                 </button>
@@ -724,97 +820,82 @@ const Classroom: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 2: Notes */}
+          {/* TAB 2: Shared Collaborative Notes */}
           {activeTab === 'notes' && (
-            <div className="flex-1 flex flex-col p-3 sm:p-4 overflow-hidden">
-              <span className="text-[11px] text-slate-400 font-bold mb-2">Live Collaborative Notepad:</span>
+            <div className="flex-1 flex flex-col p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Collaborative Notepad</span>
+                <span className="text-[10px] text-primary-400 font-mono">Live synced via socket</span>
+              </div>
               <textarea
                 value={sharedNotes}
-                onChange={(e) => setSharedNotes(e.target.value)}
-                className="flex-1 bg-slate-900/60 border border-slate-800 rounded-2xl p-4 text-xs font-mono text-slate-300 focus:outline-none focus:ring-1 focus:ring-primary-500 resize-none leading-relaxed"
-                placeholder="Type real-time study notes here..."
+                onChange={(e) => handleNotesChange(e.target.value)}
+                className="flex-1 w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 text-xs font-mono text-slate-200 focus:outline-none focus:border-primary-500 resize-none leading-relaxed"
+                placeholder="Type lesson notes or formulas here..."
               />
-              <span className="text-[10px] text-slate-500 mt-2">Changes are synchronized live with the educator.</span>
             </div>
           )}
 
-          {/* TAB 3: AI Copilot */}
+          {/* TAB 3: Live AI Copilot */}
           {activeTab === 'ai' && (
-            <div className="flex-1 flex flex-col justify-between p-3 sm:p-4 overflow-hidden">
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
-                
-                {/* Quick Prompts */}
-                <div className="p-2.5 bg-slate-900 rounded-2xl border border-slate-800 space-y-1.5">
-                  <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                    <Sparkles className="h-3 w-3" /> Quick AI Prompts
-                  </span>
-                  <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => handleAskAI('Explain chain rule step-by-step with an example')}
-                      className="text-left text-[11px] p-1.5 bg-slate-800/80 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
-                    >
-                      ⚡ Explain Chain Rule with example
-                    </button>
-                    <button
-                      onClick={() => handleAskAI('Generate 1 practice calculus question')}
-                      className="text-left text-[11px] p-1.5 bg-slate-800/80 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
-                    >
-                      🎯 Give me a practice question
-                    </button>
-                    <button
-                      onClick={() => handleAskAI('Summarize key takeaways for this topic')}
-                      className="text-left text-[11px] p-1.5 bg-slate-800/80 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
-                    >
-                      📋 Summarize key takeaways
-                    </button>
-                  </div>
-                </div>
-
-                {/* AI Chat History */}
-                {aiMessages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
-                  >
-                    <span className="text-[10px] text-slate-500 font-semibold mb-1 flex items-center gap-1">
-                      {msg.role === 'user' ? 'You' : <><Bot className="h-3 w-3 text-amber-400" /> AI Copilot</>} • {msg.time}
-                    </span>
-                    <div
-                      className={`p-3 rounded-2xl max-w-[90%] text-xs leading-relaxed whitespace-pre-line ${
-                        msg.role === 'user'
-                          ? 'bg-primary-600 text-white font-medium rounded-tr-none'
-                          : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none shadow-md'
-                      }`}
-                    >
+            <div className="flex-1 flex flex-col justify-between overflow-hidden p-3 sm:p-4">
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {aiMessages.map((msg, idx) => (
+                  <div key={idx} className={`p-3.5 rounded-2xl text-xs ${
+                    msg.role === 'assistant'
+                      ? 'bg-slate-900 border border-primary-500/30 text-slate-200'
+                      : 'bg-primary-600/30 border border-primary-500/40 text-primary-100 ml-4'
+                  }`}>
+                    <div className="flex items-center justify-between mb-1 text-[10px] text-slate-400">
+                      <span className="font-bold flex items-center gap-1">
+                        {msg.role === 'assistant' ? <Sparkles className="h-3 w-3 text-amber-300" /> : null}
+                        {msg.role === 'assistant' ? 'Tutor Hub AI Copilot' : 'You'}
+                      </span>
+                      <span>{msg.time}</span>
+                    </div>
+                    <div className="whitespace-pre-wrap leading-relaxed text-xs">
                       {msg.content}
                     </div>
                   </div>
                 ))}
-
                 {aiLoading && (
-                  <div className="flex items-center gap-2 text-xs text-amber-400 p-2">
-                    <Sparkles className="h-4 w-4 animate-spin" />
-                    <span>AI Copilot is solving...</span>
+                  <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-full bg-primary-500 animate-ping" />
+                    <span>Analyzing formula with academic reasoning engine...</span>
                   </div>
                 )}
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex gap-2 flex-shrink-0">
-                <input
-                  type="text"
-                  placeholder="Ask AI Copilot anything..."
-                  value={aiInput}
-                  onChange={(e) => setAiInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAskAI()}
-                  className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleAskAI()}
-                  className="p-2.5 bg-gradient-to-r from-amber-500 to-primary-600 hover:opacity-90 text-white rounded-xl shadow-md transition-opacity"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
+              <div className="pt-3 border-t border-slate-800 space-y-2">
+                <div className="flex flex-wrap gap-1">
+                  {['Chain rule example', 'Practice challenge', 'Lesson summary'].map((quick) => (
+                    <button
+                      key={quick}
+                      onClick={() => handleAskAI(quick)}
+                      className="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-[10px] text-slate-400 font-semibold transition-colors"
+                    >
+                      {quick}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={aiInput}
+                    onChange={(e) => setAiInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAskAI()}
+                    placeholder="Ask AI step-by-step math, physics or code..."
+                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-primary-500"
+                  />
+                  <button
+                    onClick={() => handleAskAI()}
+                    disabled={aiLoading}
+                    className="p-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 text-white rounded-xl shadow-md transition-all flex items-center justify-center disabled:opacity-50"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
           )}
