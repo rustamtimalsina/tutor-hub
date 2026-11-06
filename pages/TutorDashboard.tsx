@@ -336,9 +336,20 @@ const TutorDashboard: React.FC = () => {
                 />
               </div>
 
+              <div>
+                <label className="block mb-1.5 uppercase tracking-wider text-slate-400 text-[10px]">Escrow Payout Wallet (eSewa / Khalti)</label>
+                <input 
+                  type="text"
+                  defaultValue="9801234567"
+                  placeholder="Enter 10-digit mobile wallet ID"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white font-bold"
+                />
+                <span className="text-[10px] text-slate-400 font-normal mt-1 block">Escrow payouts are disbursed directly to this mobile wallet upon lesson sign-off.</span>
+              </div>
+
               <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl text-emerald-800 dark:text-emerald-300 text-[11px] font-bold flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Verified Master Tier • Instant payout enabled</span>
+                <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                <span>Verified Master Tier • Instant escrow withdrawal verified</span>
               </div>
             </div>
 
