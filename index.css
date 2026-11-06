@@ -49,6 +49,51 @@
   .preserve-3d {
     transform-style: preserve-3d;
   }
+
+  /* 21st.dev / Magic UI Marquee Animations */
+  @keyframes marqueeLeft {
+    from {
+      transform: translateX(0%);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+
+  @keyframes marqueeRight {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0%);
+    }
+  }
+
+  .animate-marquee-left {
+    animation: marqueeLeft linear infinite;
+  }
+
+  .animate-marquee-right {
+    animation: marqueeRight linear infinite;
+  }
+
+  /* Shimmer effect for next-level buttons */
+  @keyframes shimmer {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .animate-shimmer {
+    background-size: 200% 200%;
+    animation: shimmer 3s ease infinite;
+  }
 }
 
 /* Custom modern scrollbar */
