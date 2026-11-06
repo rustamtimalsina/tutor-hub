@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React from 'react';
 
 interface TiltCardProps {
   children: React.ReactNode;
@@ -7,68 +7,15 @@ interface TiltCardProps {
 }
 
 export const TiltCard: React.FC<TiltCardProps> = ({ children, className = '', onClick }) => {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [transform, setTransform] = useState('');
-  const [coords, setCoords] = useState({ x: 50, y: 50, isHovered: false });
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateX = ((y - centerY) / centerY) * -5;
-    const rotateY = ((x - centerX) / centerX) * 5;
-
-    setTransform(`perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.01, 1.01, 1.01)`);
-    setCoords({
-      x,
-      y,
-      isHovered: true,
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setTransform('perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)');
-    setCoords((prev) => ({ ...prev, isHovered: false }));
-  };
-
   return (
     <div
-      ref={cardRef}
       onClick={onClick}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        transform,
-        transition: 'transform 0.15s ease-out, box-shadow 0.2s ease',
-      }}
-      className={`relative preserve-3d will-change-transform group rounded-3xl p-[1px] overflow-hidden ${className}`}
+      className={`group relative rounded-3xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_-8px_rgba(124,58,237,0.18)] dark:hover:shadow-[0_12px_40px_-8px_rgba(139,92,246,0.25)] ${className}`}
     >
-      {/* Dynamic 21st.dev Spotlight Border Glow */}
-      <div
-        className="pointer-events-none absolute -inset-px rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
-        style={{
-          background: coords.isHovered
-            ? `radial-gradient(350px circle at ${coords.x}px ${coords.y}px, rgba(139, 92, 246, 0.45), rgba(6, 182, 212, 0.25), transparent 70%)`
-            : 'none',
-        }}
-      />
+      {/* Subtle border glow halo behind the card (never obscuring content) */}
+      <div className="pointer-events-none absolute -inset-[1px] rounded-3xl bg-gradient-to-r from-primary-500/0 via-primary-500/25 to-indigo-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-[2px]" />
 
-      {/* Dynamic Glare Overlay */}
-      <div
-        className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
-        style={{
-          background: coords.isHovered
-            ? `radial-gradient(280px circle at ${coords.x}px ${coords.y}px, rgba(255, 255, 255, 0.08), transparent 80%)`
-            : 'none',
-        }}
-      />
-
-      <div className="relative z-0 w-full h-full">
+      <div className="relative z-10 w-full h-full">
         {children}
       </div>
     </div>
