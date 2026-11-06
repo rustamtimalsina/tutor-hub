@@ -96,7 +96,7 @@ const StudentDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 pb-16 transition-colors duration-200">
+    <div className="min-h-screen bg-transparent text-slate-800 dark:text-slate-100 pb-16 transition-colors duration-200">
       
       {/* Dashboard Hero Header */}
       <div className="bg-gradient-to-r from-slate-900 via-primary-950 to-indigo-950 text-white py-10 px-4 sm:px-6 lg:px-8 shadow-xl relative overflow-hidden">

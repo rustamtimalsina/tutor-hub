@@ -26,7 +26,7 @@ const Welcome: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-transparent text-white flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       
       {/* 3D Dynamic Ambient Glows */}
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-primary-600/25 rounded-full blur-[140px] pointer-events-none" />

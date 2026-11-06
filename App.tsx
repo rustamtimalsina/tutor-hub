@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import GlobalBackground from './components/GlobalBackground';
 import Home from './pages/Home';
 import TutorProfile from './pages/TutorProfile';
 import StudentDashboard from './pages/StudentDashboard';
@@ -83,8 +84,9 @@ const AppContent: React.FC = () => {
 
   return (
     <>
+      <GlobalBackground />
       {showNavbar && <Navbar />}
-      <main className="min-h-screen">
+      <main className="min-h-screen relative z-10">
         <Routes>
           <Route path="/" element={<Welcome />} />
           <Route path="/auth" element={<Auth />} />
@@ -107,7 +109,7 @@ export function App() {
       <ThemeProvider>
         <AppProvider>
           <Router>
-            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased selection:bg-primary-500 selection:text-white transition-colors duration-200">
+            <div className="min-h-screen bg-transparent text-slate-900 dark:text-slate-100 font-sans antialiased selection:bg-primary-500 selection:text-white transition-colors duration-200 relative">
               <AppContent />
             </div>
           </Router>

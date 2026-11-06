@@ -112,7 +112,7 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-transparent text-slate-100 flex items-center justify-center p-4 sm:p-8 relative overflow-hidden">
       {/* 3D Atmosphere Glowing Blobs */}
       <div className="absolute top-10 left-10 w-96 h-96 bg-primary-600/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />

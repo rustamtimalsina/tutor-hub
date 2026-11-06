@@ -93,7 +93,7 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/70 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300">
+    <div className="min-h-screen bg-transparent text-slate-800 dark:text-slate-100 transition-colors duration-300">
       
       {/* 21st.dev Next-Gen Hero Section with Aceternity Spotlight & Background Grid */}
       <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-900 text-white pt-28 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8">
