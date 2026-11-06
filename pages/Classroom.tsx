@@ -5,7 +5,7 @@ import {
   PenTool, Eraser, RotateCcw, Download, MessageSquare, 
   FileText, Users, Sparkles, Send, CheckCircle2, Sliders,
   Bot, HelpCircle, Lightbulb, Compass, Play, Layout, MessageCircle,
-  Wifi, WifiOff
+  Wifi, WifiOff, Star, ShieldCheck, Award, X
 } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import { useApp } from '../context/AppContext';
@@ -93,6 +93,12 @@ const Classroom: React.FC = () => {
   const [sharedNotes, setSharedNotes] = useState(
     "📝 Lesson Plan:\n1. Derivative of Composite Functions (Chain Rule)\n2. Implicit Differentiation\n3. Physics application: Velocity & Acceleration\n\nNotes from Tutor:\n- Recall that d/dx [f(g(x))] = f'(g(x)) * g'(x)"
   );
+
+  // Post-Session Completion & Escrow Release Modal
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('Excellent session! The interactive 3D whiteboard and step-by-step calculus explanations made everything clear.');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   // Timer
   const [secondsElapsed, setSecondsElapsed] = useState(35);
@@ -463,8 +469,50 @@ const Classroom: React.FC = () => {
 
   const handleEndSession = () => {
     try { sounds.playLeaveCall(); } catch {}
-    const targetDashboard = role === 'tutor' ? '/tutor-dashboard' : '/student-dashboard';
-    navigate(targetDashboard);
+    // If student, prompt completion & escrow release modal; if tutor, directly exit or show summary
+    if (role === 'student') {
+      setShowCompletionModal(true);
+    } else {
+      navigate('/tutor-dashboard');
+    }
+  };
+
+  const handleDirectExit = () => {
+    setShowCompletionModal(false);
+    navigate(role === 'tutor' ? '/tutor-dashboard' : '/student-dashboard');
+  };
+
+  const handleSubmitReview = async () => {
+    setIsSubmittingReview(true);
+    try {
+      // Find tutor id or use fallback tutor id
+      const targetTutorId = session.tutorName?.toLowerCase().includes('rajesh') ? '1' : '2';
+      
+      await api.createReview({
+        tutorId: targetTutorId,
+        studentName: currentUser?.name || 'Alex Johnson',
+        rating,
+        comment: reviewComment,
+      });
+
+      try {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.5 },
+          colors: ['#7c3aed', '#06b6d4', '#10b981', '#f59e0b'],
+        });
+      } catch {}
+
+      setTimeout(() => {
+        handleDirectExit();
+      }, 900);
+    } catch (err) {
+      console.error('Failed to submit review:', err);
+      handleDirectExit();
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
   return (
@@ -903,6 +951,99 @@ const Classroom: React.FC = () => {
         </aside>
 
       </div>
+
+      {/* Post-Session Completion & Escrow Release Modal */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-7 text-white space-y-5">
+            
+            {/* Top Badge */}
+            <div className="text-center space-y-2">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/25">
+                <ShieldCheck className="h-7 w-7" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black tracking-tight">Lesson Completed!</h3>
+              <p className="text-xs text-slate-400 font-medium">
+                {session.subject} with {session.tutorName}
+              </p>
+            </div>
+
+            {/* Escrow Release Notice */}
+            <div className="p-3.5 rounded-2xl bg-emerald-950/50 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2.5">
+              <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+              <div>
+                <span className="font-bold">Escrow Payout Released</span>
+                <p className="text-[11px] text-emerald-400/80 leading-snug">
+                  NPR {session.price || 1500} has been released safely to {session.tutorName}.
+                </p>
+              </div>
+            </div>
+
+            {/* Star Rating Selector */}
+            <div className="space-y-2 text-center">
+              <label className="text-xs font-black uppercase tracking-wider text-slate-400 block">
+                Rate Your Experience
+              </label>
+              <div className="flex items-center justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => {
+                      try { sounds.playClick(); } catch {}
+                      setRating(star);
+                    }}
+                    className="p-1 text-2xl transition-transform hover:scale-125 focus:outline-none"
+                  >
+                    <Star
+                      className={`h-7 w-7 ${
+                        star <= rating
+                          ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]'
+                          : 'text-slate-600'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Testimonial Review Textarea */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
+                Your Review & Feedback
+              </label>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                rows={3}
+                className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 font-medium leading-relaxed"
+                placeholder="Share how this mentor helped you understand today's concepts..."
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-2 flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                disabled={isSubmittingReview}
+                onClick={handleSubmitReview}
+                className="flex-1 py-3 px-5 rounded-xl bg-gradient-to-r from-primary-600 via-indigo-600 to-purple-600 hover:from-primary-500 hover:to-purple-500 text-white font-black text-xs sm:text-sm shadow-xl shadow-primary-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Sparkles className="h-4 w-4 text-amber-300" />
+                {isSubmittingReview ? 'Submitting to Database...' : 'Submit Review & Exit'}
+              </button>
+              <button
+                type="button"
+                onClick={handleDirectExit}
+                className="py-3 px-4 rounded-xl border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-bold transition-colors"
+              >
+                Skip & Return
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
