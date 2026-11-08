@@ -96,7 +96,7 @@ const Home: React.FC = () => {
     <div className="min-h-screen bg-transparent text-slate-800 dark:text-slate-100 transition-colors duration-300">
       
       {/* 21st.dev Next-Gen Hero Section with Aceternity Spotlight & Background Grid */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-900 text-white pt-28 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden bg-transparent text-slate-900 dark:text-white pt-28 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 transition-colors duration-500">
         
         {/* Dynamic Aceternity Spotlight Beam */}
         <Spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="#8b5cf6" />
@@ -105,8 +105,8 @@ const Home: React.FC = () => {
         <BackgroundGrid type="dots" />
 
         {/* Ambient Glow Orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-accent-cyan/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/15 dark:bg-primary-600/25 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-accent-cyan/15 dark:bg-accent-cyan/20 rounded-full blur-3xl pointer-events-none" />
         
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
           
@@ -114,38 +114,38 @@ const Home: React.FC = () => {
           <div className="lg:col-span-7 text-center lg:text-left space-y-5 sm:space-y-6">
             
             {/* Pill Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-primary-200 text-xs font-semibold uppercase tracking-wider shadow-inner">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-50 dark:bg-white/10 backdrop-blur-md border border-primary-200 dark:border-white/15 text-primary-700 dark:text-primary-200 text-xs font-semibold uppercase tracking-wider shadow-sm">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Nepal's Premier 3D Interactive Mentorship</span>
             </div>
 
             {/* Main Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.12]">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.12] text-slate-900 dark:text-white">
               Master Any Subject with <br />
-              <span className="bg-gradient-to-r from-primary-400 via-sky-300 to-purple-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary-600 via-indigo-600 to-purple-600 dark:from-primary-400 dark:via-sky-300 dark:to-purple-300 bg-clip-text text-transparent">
                 World-Class Mentors
               </span>
             </h1>
 
-            <p className="text-sm sm:text-lg text-slate-300 max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
+            <p className="text-sm sm:text-lg text-slate-600 dark:text-slate-300 max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
               Experience personalized 1-on-1 learning with verified tutors in Nepal. Real-time collaborative 3D whiteboard, instant AI STEM copilot, and 100% escrow payment protection.
             </p>
 
             {/* Interactive Search Bar with Keyboard Shortcut */}
             <div className="max-w-xl mx-auto lg:mx-0 relative pt-1">
-              <div className="relative flex items-center shadow-2xl rounded-2xl overflow-hidden p-1.5 bg-white/10 backdrop-blur-xl border border-white/20 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all">
+              <div className="relative flex items-center shadow-xl rounded-2xl overflow-hidden p-1.5 bg-white/90 dark:bg-white/10 backdrop-blur-xl border border-slate-200/90 dark:border-white/20 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/20 transition-all">
                 <div className="pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <Search className="h-5 w-5" />
                 </div>
                 <input
                   ref={searchInputRef}
                   type="text"
-                  className="w-full bg-transparent border-none text-white placeholder-slate-400 focus:outline-none focus:ring-0 px-3 py-2.5 sm:py-3 text-xs sm:text-base font-medium"
+                  className="w-full bg-transparent border-none text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-0 px-3 py-2.5 sm:py-3 text-xs sm:text-base font-medium"
                   placeholder="Search subject, tutor, or college (e.g. Calculus, Alex)..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <div className="hidden sm:flex items-center mr-2 px-2 py-0.5 rounded-md bg-white/10 border border-white/20 text-[11px] text-slate-300 font-mono">
+                <div className="hidden sm:flex items-center mr-2 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/20 text-[11px] text-slate-500 dark:text-slate-300 font-mono">
                   /
                 </div>
                 <button 
@@ -154,7 +154,7 @@ const Home: React.FC = () => {
                     const el = document.getElementById('tutors-catalog');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="bg-gradient-to-r from-primary-500 to-indigo-600 hover:from-primary-600 hover:to-indigo-700 text-white px-4 sm:px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-lg transition-transform hover:scale-105 active:scale-95 flex-shrink-0"
+                  className="bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white px-4 sm:px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-lg transition-transform hover:scale-105 active:scale-95 flex-shrink-0"
                 >
                   Explore <ArrowRight className="h-3.5 w-3.5" />
                 </button>
@@ -162,7 +162,7 @@ const Home: React.FC = () => {
 
               {/* Quick Search Chips */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-1.5 sm:gap-2 mt-3">
-                <span className="text-[11px] text-slate-400 font-semibold mr-1">Popular:</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mr-1">Popular:</span>
                 {QUICK_TAGS.map((tag) => (
                   <button
                     key={tag}
@@ -172,7 +172,7 @@ const Home: React.FC = () => {
                       const el = document.getElementById('tutors-catalog');
                       if (el) el.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-slate-200 transition-colors"
+                    className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 border border-slate-200 dark:border-white/15 text-slate-700 dark:text-slate-200 transition-colors"
                   >
                     {tag}
                   </button>
@@ -181,17 +181,17 @@ const Home: React.FC = () => {
             </div>
 
             {/* Trust Badges */}
-            <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 text-xs text-slate-300 font-semibold">
+            <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 text-xs text-slate-600 dark:text-slate-300 font-semibold">
               <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
                 <span>100% Verified Credentials</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-cyan-400" />
+                <ShieldCheck className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
                 <span>Escrow Milestone Security</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <Zap className="h-4 w-4 text-amber-400" />
+                <Zap className="h-4 w-4 text-amber-500 dark:text-amber-400" />
                 <span>Khalti & eSewa Checkout</span>
               </div>
             </div>
@@ -255,29 +255,29 @@ const Home: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           
           {/* Card 1: 3D Classroom Whiteboard */}
-          <div className="md:col-span-2 relative rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-indigo-900/90 via-slate-900 to-purple-950 text-white border border-indigo-500/30 shadow-xl overflow-hidden group">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-primary-500/20 rounded-full blur-3xl pointer-events-none group-hover:bg-primary-500/30 transition-all" />
+          <div className="md:col-span-2 relative rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-indigo-50/90 via-white to-purple-50/90 dark:from-indigo-950/90 dark:via-slate-900 dark:to-purple-950 text-slate-900 dark:text-white border border-indigo-100 dark:border-indigo-500/30 shadow-xl overflow-hidden group transition-colors duration-500">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-primary-500/10 dark:bg-primary-500/20 rounded-full blur-3xl pointer-events-none group-hover:bg-primary-500/25 transition-all" />
             <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
               <div>
-                <div className="h-10 w-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-primary-300 mb-4">
+                <div className="h-10 w-10 rounded-2xl bg-primary-100 dark:bg-white/10 border border-primary-200 dark:border-white/20 flex items-center justify-center text-primary-600 dark:text-primary-300 mb-4 shadow-sm">
                   <Layers className="h-5 w-5" />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-black tracking-tight mb-2">
                   Multiplayer Bézier Whiteboard
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-300 max-w-lg leading-relaxed font-normal">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-lg leading-relaxed font-normal">
                   Draw math formulas, physics free-body diagrams, and organic chemistry structures in real-time with quadratic curve smoothing and zero lag over WebSockets.
                 </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3 pt-2">
-                <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-semibold border border-white/15">
+                <span className="px-3 py-1 rounded-full bg-white dark:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-white/15 shadow-sm">
                   ⚡ 60 FPS Sync
                 </span>
-                <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-semibold border border-white/15">
+                <span className="px-3 py-1 rounded-full bg-white dark:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-white/15 shadow-sm">
                   ✏️ Bézier Smoothing
                 </span>
-                <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-semibold border border-white/15">
+                <span className="px-3 py-1 rounded-full bg-white dark:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-white/15 shadow-sm">
                   📷 PNG Export
                 </span>
               </div>
@@ -321,25 +321,25 @@ const Home: React.FC = () => {
           </div>
 
           {/* Card 4: Local Nepal Payments */}
-          <div className="md:col-span-2 relative rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-purple-900/40 via-slate-900 to-indigo-900/40 text-white border border-purple-500/20 shadow-xl flex flex-col justify-between">
+          <div className="md:col-span-2 relative rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-purple-50/90 via-white to-indigo-50/90 dark:from-purple-900/40 dark:via-slate-900 dark:to-indigo-900/40 text-slate-900 dark:text-white border border-purple-100 dark:border-purple-500/20 shadow-xl flex flex-col justify-between transition-colors duration-500">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <div className="h-10 w-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-300 mb-4">
+                <div className="h-10 w-10 rounded-2xl bg-amber-100 dark:bg-amber-500/20 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-300 mb-4 shadow-sm">
                   <Zap className="h-5 w-5" />
                 </div>
                 <h3 className="text-xl sm:text-2xl font-black tracking-tight mb-2">
                   Instant Khalti & eSewa Booking
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-300 max-w-md leading-relaxed font-normal">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-md leading-relaxed font-normal">
                   No international cards needed. Pay in Nepalese Rupees directly via mobile wallets with instant sandbox verification.
                 </p>
               </div>
 
               <div className="flex items-center gap-2.5">
-                <div className="px-4 py-2 rounded-2xl bg-purple-600/30 border border-purple-400/40 font-black text-xs text-purple-200">
+                <div className="px-4 py-2 rounded-2xl bg-purple-100 dark:bg-purple-600/30 border border-purple-200 dark:border-purple-400/40 font-black text-xs text-purple-700 dark:text-purple-200 shadow-sm">
                   Khalti Pay
                 </div>
-                <div className="px-4 py-2 rounded-2xl bg-emerald-600/30 border border-emerald-400/40 font-black text-xs text-emerald-200">
+                <div className="px-4 py-2 rounded-2xl bg-emerald-100 dark:bg-emerald-600/30 border border-emerald-200 dark:border-emerald-400/40 font-black text-xs text-emerald-700 dark:text-emerald-200 shadow-sm">
                   eSewa
                 </div>
               </div>
