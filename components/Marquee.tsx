@@ -17,7 +17,7 @@ export const Marquee: React.FC<MarqueeProps> = ({
 }) => {
   return (
     <div
-      className={`group relative flex overflow-hidden p-2 [mask-image:linear-gradient(to_right,transparent_0%,rgba(0,0,0,1)_12%,rgba(0,0,0,1)_88%,transparent_100%)] ${className}`}
+      className={`group relative flex overflow-hidden p-2 [mask-image:linear-gradient(to_right,transparent_0%,rgba(0,0,0,1)_4%,rgba(0,0,0,1)_96%,transparent_100%)] ${className}`}
     >
       <div
         className={`flex min-w-full shrink-0 items-center justify-around gap-6 ${

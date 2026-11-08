@@ -21,13 +21,41 @@ import { sounds } from '../utils/soundEffects';
 const QUICK_TAGS = ['Physics 11/12', 'Calculus', 'Python', 'SEE Math', 'Organic Chemistry', 'IELTS'];
 
 const INSTITUTIONS = [
-  { name: 'IOE Pulchowk', tag: 'Engineering', color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
-  { name: 'Tribhuvan University', tag: 'Central Campus', color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
-  { name: 'Kathmandu University', tag: 'KU Dhulikhel', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
-  { name: "St. Xavier's Maitighar", tag: '+2 Science', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-  { name: 'Budhanilkantha School', tag: 'A-Levels', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-  { name: 'The British College', tag: 'Computing', color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
-  { name: 'Apex College', tag: 'Management', color: 'text-sky-400 bg-sky-500/10 border-sky-500/20' },
+  { 
+    name: 'IOE Pulchowk', 
+    tag: 'Engineering', 
+    color: 'text-indigo-900 bg-indigo-50 border-indigo-200 dark:text-indigo-300 dark:bg-indigo-500/15 dark:border-indigo-500/30' 
+  },
+  { 
+    name: 'Tribhuvan University', 
+    tag: 'Central Campus', 
+    color: 'text-cyan-900 bg-cyan-50 border-cyan-200 dark:text-cyan-300 dark:bg-cyan-500/15 dark:border-cyan-500/30' 
+  },
+  { 
+    name: 'Kathmandu University', 
+    tag: 'KU Dhulikhel', 
+    color: 'text-purple-900 bg-purple-50 border-purple-200 dark:text-purple-300 dark:bg-purple-500/15 dark:border-purple-500/30' 
+  },
+  { 
+    name: "St. Xavier's Maitighar", 
+    tag: '+2 Science', 
+    color: 'text-amber-900 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-500/15 dark:border-amber-500/30' 
+  },
+  { 
+    name: 'Budhanilkantha School', 
+    tag: 'A-Levels', 
+    color: 'text-emerald-900 bg-emerald-50 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-500/15 dark:border-emerald-500/30' 
+  },
+  { 
+    name: 'The British College', 
+    tag: 'Computing', 
+    color: 'text-rose-900 bg-rose-50 border-rose-200 dark:text-rose-300 dark:bg-rose-500/15 dark:border-rose-500/30' 
+  },
+  { 
+    name: 'Apex College', 
+    tag: 'Management', 
+    color: 'text-sky-900 bg-sky-50 border-sky-200 dark:text-sky-300 dark:bg-sky-500/15 dark:border-sky-500/30' 
+  },
 ];
 
 const Home: React.FC = () => {
@@ -213,9 +241,9 @@ const Home: React.FC = () => {
       <LiveMetricsBar />
 
       {/* 21st.dev Infinite Marquee of Verified Institutions & Tutors */}
-      <div className="py-4 border-y border-slate-200/60 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 mb-2 flex items-center justify-between">
-          <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+      <div className="py-4 border-y border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 mb-2.5 flex items-center justify-between">
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Educators From Top Institutions
           </span>
           <span className="text-[11px] font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1">
@@ -226,10 +254,10 @@ const Home: React.FC = () => {
           {INSTITUTIONS.map((inst, i) => (
             <div
               key={i}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-bold shadow-sm whitespace-nowrap cursor-default ${inst.color}`}
+              className={`flex items-center gap-2.5 px-4 py-1.5 rounded-full border text-xs font-bold shadow-sm whitespace-nowrap cursor-default ${inst.color}`}
             >
               <span>{inst.name}</span>
-              <span className="text-[10px] opacity-75 font-mono px-1.5 py-0.2 rounded-full bg-black/20">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-900/10 dark:bg-white/15 text-slate-800 dark:text-slate-100 border border-slate-900/10 dark:border-white/10">
                 {inst.tag}
               </span>
             </div>
