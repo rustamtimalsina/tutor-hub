@@ -227,8 +227,10 @@ const Home: React.FC = () => {
           </div>
 
           {/* Right 3D Interactive Canvas Column */}
-          <div className="lg:col-span-5 flex justify-center items-center relative">
-            <div className="w-full max-w-[340px] sm:max-w-[420px] lg:max-w-none">
+          <div className="lg:col-span-5 flex justify-center items-center relative my-2 lg:my-0">
+            {/* Soft Ambient Radial Backlight */}
+            <div className="absolute w-64 sm:w-80 h-64 sm:h-80 bg-primary-500/15 dark:bg-primary-500/25 rounded-full blur-3xl pointer-events-none" />
+            <div className="w-full max-w-[310px] sm:max-w-[380px] lg:max-w-[440px] relative">
               <Hero3DCanvas />
             </div>
           </div>
