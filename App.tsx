@@ -79,8 +79,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 // Wrapper to conditionally render Navbar & Global AI Widget
 const AppContent: React.FC = () => {
   const location = useLocation();
-  // Hide Navbar on Welcome screen (root path), Auth page, and inside live Classroom
-  const showNavbar = location.pathname !== '/' && location.pathname !== '/auth' && !location.pathname.startsWith('/classroom');
+  // Hide Navbar and floating AI widget inside live Classroom
+  const isClassroom = location.pathname.startsWith('/classroom');
+  const showNavbar = location.pathname !== '/' && location.pathname !== '/auth' && !isClassroom;
 
   return (
     <>
@@ -98,7 +99,7 @@ const AppContent: React.FC = () => {
           <Route path="/documentation" element={<Documentation />} />
         </Routes>
       </main>
-      <AIAssistantWidget />
+      {!isClassroom && <AIAssistantWidget />}
     </>
   );
 };

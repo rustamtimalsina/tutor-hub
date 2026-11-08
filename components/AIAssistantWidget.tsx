@@ -14,11 +14,6 @@ const AIAssistantWidget: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // If inside the classroom, classroom already has its integrated sidebar, so hide floating widget
-  if (location.pathname.startsWith('/classroom')) {
-    return null;
-  }
-
   const [messages, setMessages] = useState<AIMsg[]>([
     {
       role: 'assistant',
@@ -27,6 +22,12 @@ const AIAssistantWidget: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // If inside the classroom, classroom already has its integrated sidebar, so hide floating widget
+  // (Safe after all hook declarations)
+  if (location.pathname.startsWith('/classroom')) {
+    return null;
+  }
 
   const handleLaunchClassroom = () => {
     sounds.playJoinCall();
