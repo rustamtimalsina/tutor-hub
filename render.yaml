@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: tutor-hub-api
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run server
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: KHALTI_SECRET_KEY
+        sync: false
+      - key: ESEWA_PRODUCT_CODE
+        value: EPAYTEST
+      - key: ESEWA_SECRET_KEY
+        value: "8gBm/:&EnhH.1/q"
+      - key: CLIENT_URL
+        sync: false

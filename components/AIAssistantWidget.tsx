@@ -3,6 +3,7 @@ import { Bot, X, Sparkles, Send, MessageSquare, BookOpen, HelpCircle, ArrowRight
 import { useLocation, useNavigate } from 'react-router-dom';
 import { sounds } from '../utils/soundEffects';
 import { api } from '../services/api';
+import MathMarkdown from './MathMarkdown';
 
 interface AIMsg {
   role: 'user' | 'assistant';
@@ -47,10 +48,10 @@ const AIAssistantWidget: React.FC = () => {
     try {
       const lower = q.toLowerCase();
       let reply = '';
-      if (lower.includes('classroom') || lower.includes('demo') || lower.includes('whiteboard') || lower.includes('video')) {
-        reply = "🚀 Live 1-on-1 Classroom is ready! It includes the interactive whiteboard, dual video feeds, and in-call AI tutor. Click the button below to jump straight into the room:";
+      if (lower.includes('launch classroom') || lower.includes('open classroom')) {
+        reply = "🚀 Live 1-on-1 Classroom is ready! It includes the interactive whiteboard, real WebRTC video feeds, and in-call Gemini AI tutor. Click the button below to jump straight into the room:";
       } else {
-        reply = await api.askCopilot(q, 'General Mentorship');
+        reply = await api.askCopilot(q, 'General STEM & Mentorship', undefined, messages);
       }
 
       try { sounds.playMessage(); } catch {}
@@ -88,20 +89,20 @@ const AIAssistantWidget: React.FC = () => {
 
       {/* Slide-Up AI Drawer with 100% Mobile Viewport Protection */}
       {isOpen && (
-        <div className="bg-slate-950 text-white rounded-3xl w-[calc(100vw-2rem)] max-w-[420px] h-[520px] max-h-[85vh] shadow-2xl border border-slate-800 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl text-slate-900 dark:text-white rounded-3xl w-[calc(100vw-2rem)] max-w-[420px] h-[540px] max-h-[85vh] shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
           
           {/* Header */}
-          <div className="bg-gradient-to-r from-primary-900 via-indigo-950 to-slate-950 px-4 sm:px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-primary-600 via-indigo-700 to-purple-800 px-4 sm:px-5 py-3.5 border-b border-white/10 flex items-center justify-between text-white">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-gradient-to-tr from-amber-400 to-primary-600 rounded-2xl text-slate-950 shadow-md">
+              <div className="p-2 bg-gradient-to-tr from-amber-400 to-primary-500 rounded-2xl text-slate-950 shadow-md">
                 <Bot className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
               <div>
                 <h3 className="font-black text-xs sm:text-sm text-white flex items-center gap-1.5">
                   Tutor Hub AI Copilot
-                  <span className="bg-amber-400/20 text-amber-300 text-[9px] px-1.5 py-0.5 rounded font-black uppercase">GPT</span>
+                  <span className="bg-amber-400/20 text-amber-200 border border-amber-300/30 text-[9px] px-1.5 py-0.5 rounded font-black uppercase">Gemini</span>
                 </h3>
-                <p className="text-[10px] sm:text-[11px] text-slate-400">Available 24/7 across the platform</p>
+                <p className="text-[10px] sm:text-[11px] text-white/75">STEM Solver & Smart Tutor Match</p>
               </div>
             </div>
             <button
@@ -109,7 +110,7 @@ const AIAssistantWidget: React.FC = () => {
                 sounds.playClick();
                 setIsOpen(false);
               }}
-              className="text-slate-400 hover:text-white p-1 rounded-xl hover:bg-slate-800 transition-colors"
+              className="text-white/70 hover:text-white p-1 rounded-xl hover:bg-white/10 transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -118,8 +119,8 @@ const AIAssistantWidget: React.FC = () => {
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3 text-xs">
             {/* Quick Actions */}
-            <div className="space-y-1.5 bg-slate-900/90 p-3 rounded-2xl border border-slate-800">
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
+            <div className="space-y-1.5 bg-slate-50 dark:bg-slate-900/90 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
+              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
                 <Sparkles className="h-3 w-3" /> Quick Launch & Inquiries
               </span>
               <div className="flex flex-col gap-1.5">
@@ -135,16 +136,16 @@ const AIAssistantWidget: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => handleSend('Who is the best tutor for Calculus?')}
-                  className="text-left p-2 bg-slate-800/80 hover:bg-slate-700/80 rounded-xl text-slate-300 text-[11px] transition-colors"
+                  onClick={() => handleSend('Solve ∫ x * e^x dx step by step using integration by parts')}
+                  className="text-left p-2 bg-white hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-slate-200/70 dark:border-slate-700/50 rounded-xl text-slate-700 dark:text-slate-300 text-[11px] font-medium transition-colors"
                 >
-                  📐 Who is the best tutor for Calculus?
+                  📐 Solve ∫ x·eˣ dx step-by-step (KaTeX)
                 </button>
                 <button
-                  onClick={() => handleSend('How does payment and escrow work?')}
-                  className="text-left p-2 bg-slate-800/80 hover:bg-slate-700/80 rounded-xl text-slate-300 text-[11px] transition-colors"
+                  onClick={() => handleSend('How does Khalti and eSewa escrow payment work?')}
+                  className="text-left p-2 bg-white hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-slate-200/70 dark:border-slate-700/50 rounded-xl text-slate-700 dark:text-slate-300 text-[11px] font-medium transition-colors"
                 >
-                  💳 How does Khalti/eSewa payment work?
+                  💳 How does Khalti/eSewa escrow work?
                 </button>
               </div>
             </div>
@@ -155,13 +156,13 @@ const AIAssistantWidget: React.FC = () => {
                 className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div
-                  className={`p-3 rounded-2xl max-w-[90%] leading-relaxed ${
+                  className={`p-3 rounded-2xl max-w-[92%] leading-relaxed ${
                     m.role === 'user'
-                      ? 'bg-primary-600 text-white rounded-tr-none font-medium'
-                      : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none shadow-md'
+                      ? 'bg-primary-600 text-white rounded-tr-none font-medium shadow-md'
+                      : 'bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none shadow-sm'
                   }`}
                 >
-                  <p className="whitespace-pre-line">{m.text}</p>
+                  <MathMarkdown content={m.text} className="text-xs" />
                   
                   {(m.text.includes('Live 1-on-1 Classroom') || m.text.includes('virtual classroom')) && (
                     <button
@@ -176,26 +177,27 @@ const AIAssistantWidget: React.FC = () => {
             ))}
 
             {loading && (
-              <div className="flex items-center gap-2 text-xs text-amber-400 p-2">
+              <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 p-2 font-semibold">
                 <Sparkles className="h-4 w-4 animate-spin" />
-                <span>AI is thinking...</span>
+                <span>Gemini AI is solving...</span>
               </div>
             )}
           </div>
 
           {/* Input Footer */}
-          <div className="p-3 bg-slate-950 border-t border-slate-800 flex gap-2">
+          <div className="p-3 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex gap-2">
             <input
               type="text"
-              placeholder="Ask AI Copilot anything..."
+              placeholder="Ask Gemini AI any math, physics, or coding question..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 font-medium"
+              className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium"
             />
             <button
               onClick={() => handleSend()}
-              className="p-2.5 bg-gradient-to-r from-amber-500 to-primary-600 text-white rounded-xl shadow-md hover:opacity-90 transition-opacity"
+              disabled={loading}
+              className="p-2.5 bg-gradient-to-r from-amber-500 to-primary-600 text-white rounded-xl shadow-md hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
             </button>

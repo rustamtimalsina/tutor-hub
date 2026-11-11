@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar, Clock, Search, Edit2, User as UserIcon, 
   Trash2, Video, MessageSquare, Heart, CheckCircle2, AlertCircle, ArrowRight,
   Receipt, ShieldCheck, Send, Sparkles, X, Check, ExternalLink
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/soundEffects';
+import { api } from '../services/api';
+import confetti from 'canvas-confetti';
 import { Session } from '../types';
 
 interface ChatMessage {
@@ -17,9 +19,48 @@ interface ChatMessage {
 }
 
 const StudentDashboard: React.FC = () => {
-  const { sessions, cancelSession, savedTutorIds, tutors, currentUser } = useApp();
+  const { sessions, cancelSession, addSession, savedTutorIds, tutors, currentUser } = useApp();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'bookings' | 'saved' | 'messages'>('bookings');
+  const [paymentBanner, setPaymentBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  useEffect(() => {
+    const combinedQuery = `${window.location.search}&${location.search}&${window.location.hash.split('?').slice(1).join('&')}`;
+    const hasEsewaSuccess = combinedQuery.includes('esewa=success');
+    const hasEsewaFailure = combinedQuery.includes('esewa=failure');
+    const dataMatch = combinedQuery.match(/data=([^&]+)/);
+
+    if (hasEsewaFailure) {
+      setPaymentBanner({ type: 'error', text: 'eSewa sandbox payment was cancelled or failed.' });
+      navigate('/student-dashboard', { replace: true });
+      return;
+    }
+
+    if (hasEsewaSuccess && dataMatch && dataMatch[1]) {
+      const encodedData = decodeURIComponent(dataMatch[1]);
+      (async () => {
+        const result = await api.verifyEsewa(encodedData);
+        const pendingRaw = sessionStorage.getItem('pendingEsewaBooking');
+        if (pendingRaw) {
+          sessionStorage.removeItem('pendingEsewaBooking');
+          const pendingBooking = JSON.parse(pendingRaw);
+          await addSession(pendingBooking);
+        }
+        try { sounds.playSuccess(); } catch {}
+        try {
+          confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+        } catch {}
+        setPaymentBanner({
+          type: 'success',
+          text: result?.verified
+            ? `eSewa UAT Payment Verified! Ref: ${result.transactionRef}. Booking locked in Escrow.`
+            : 'eSewa payment returned successfully. Session added to your schedule!',
+        });
+        navigate('/student-dashboard', { replace: true });
+      })();
+    }
+  }, [location.search, addSession, navigate]);
 
   // Receipt Modal State
   const [selectedReceipt, setSelectedReceipt] = useState<Session | null>(null);
@@ -98,8 +139,27 @@ const StudentDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-transparent text-slate-800 dark:text-slate-100 pb-16 transition-colors duration-200">
       
+      {/* eSewa / Khalti Gateway Verification Banner */}
+      {paymentBanner && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className={`p-4 rounded-2xl border flex items-center justify-between gap-3 shadow-lg ${
+            paymentBanner.type === 'success'
+              ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-700/60 text-emerald-900 dark:text-emerald-200'
+              : 'bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-700/60 text-rose-900 dark:text-rose-200'
+          }`}>
+            <div className="flex items-center gap-2.5 text-xs sm:text-sm font-bold">
+              <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+              <span>{paymentBanner.text}</span>
+            </div>
+            <button onClick={() => setPaymentBanner(null)} className="p-1 rounded-lg hover:bg-black/10 dark:hover:bg-white/10">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Dashboard Hero Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-primary-950 to-indigo-950 text-white py-10 px-4 sm:px-6 lg:px-8 shadow-xl relative overflow-hidden">
+      <div className="bg-white/80 dark:bg-gradient-to-r dark:from-slate-900 dark:via-primary-950 dark:to-indigo-950 backdrop-blur-xl text-slate-900 dark:text-white border-b border-slate-200/80 dark:border-white/10 py-10 px-4 sm:px-6 lg:px-8 shadow-sm dark:shadow-xl relative overflow-hidden transition-colors">
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
@@ -108,7 +168,7 @@ const StudentDashboard: React.FC = () => {
               <img
                 src={currentUser.avatar}
                 alt={studentName}
-                className="h-20 w-20 rounded-2xl object-cover shadow-lg border-2 border-white/20 ring-2 ring-primary-500/30"
+                className="h-20 w-20 rounded-2xl object-cover shadow-lg border-2 border-primary-200 dark:border-white/20 ring-2 ring-primary-500/30"
               />
             ) : (
               <div className="h-20 w-20 rounded-2xl bg-gradient-to-tr from-primary-500 to-indigo-400 text-white flex items-center justify-center text-3xl font-black shadow-lg border-2 border-white/20">
@@ -116,13 +176,13 @@ const StudentDashboard: React.FC = () => {
               </div>
             )}
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-2xl sm:text-3xl font-black tracking-tight">{studentName}</h1>
-                <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                <span className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
                   Active Student
                 </span>
               </div>
-              <p className="text-slate-400 text-xs sm:text-sm mt-1">
+              <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-1">
                 {currentUser?.gradeLevel || 'Computer Science & Advanced Mathematics • Grade 12'}
               </p>
             </div>
@@ -131,7 +191,7 @@ const StudentDashboard: React.FC = () => {
           <div className="flex items-center gap-3">
             <Link
               to="/find-tutors"
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary-500 to-indigo-600 hover:from-primary-600 hover:to-indigo-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-primary-500/30 transition-all hover:scale-105"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-primary-500/30 transition-all hover:scale-105"
             >
               <Search className="h-4 w-4" /> 
               Find New Tutors
@@ -140,22 +200,22 @@ const StudentDashboard: React.FC = () => {
         </div>
 
         {/* Quick Metrics Bar */}
-        <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/10 text-white">
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-            <span className="text-xs text-slate-400 font-semibold uppercase">Total Sessions</span>
-            <p className="text-2xl font-black text-white mt-1">{sessions.length}</p>
+        <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-200 dark:border-white/10">
+          <div className="bg-slate-50/90 dark:bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-slate-200/80 dark:border-white/10">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">Total Sessions</span>
+            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{sessions.length}</p>
           </div>
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-            <span className="text-xs text-slate-400 font-semibold uppercase">Upcoming</span>
-            <p className="text-2xl font-black text-amber-300 mt-1">{upcomingSessions.length}</p>
+          <div className="bg-slate-50/90 dark:bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-slate-200/80 dark:border-white/10">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">Upcoming</span>
+            <p className="text-2xl font-black text-amber-600 dark:text-amber-300 mt-1">{upcomingSessions.length}</p>
           </div>
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-            <span className="text-xs text-slate-400 font-semibold uppercase">Saved Tutors</span>
-            <p className="text-2xl font-black text-rose-300 mt-1">{savedTutorsList.length}</p>
+          <div className="bg-slate-50/90 dark:bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-slate-200/80 dark:border-white/10">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">Saved Tutors</span>
+            <p className="text-2xl font-black text-rose-600 dark:text-rose-300 mt-1">{savedTutorsList.length}</p>
           </div>
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-            <span className="text-xs text-slate-400 font-semibold uppercase">Total Invested</span>
-            <p className="text-2xl font-black text-emerald-300 mt-1">NPR {totalSpent}</p>
+          <div className="bg-slate-50/90 dark:bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-slate-200/80 dark:border-white/10">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">Total Invested</span>
+            <p className="text-2xl font-black text-emerald-600 dark:text-emerald-300 mt-1">NPR {totalSpent}</p>
           </div>
         </div>
       </div>

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { sounds } from '../utils/soundEffects';
+import CosmicThemeToggle from '../components/CosmicThemeToggle';
 
 const Auth: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -112,10 +113,15 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-slate-100 flex items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-transparent text-slate-900 dark:text-slate-100 flex items-center justify-center p-4 sm:p-8 relative overflow-hidden transition-colors duration-300">
+      {/* Top-Right Theme Toggle */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+        <CosmicThemeToggle />
+      </div>
+
       {/* 3D Atmosphere Glowing Blobs */}
-      <div className="absolute top-10 left-10 w-96 h-96 bg-primary-600/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-10 left-10 w-96 h-96 bg-primary-600/15 dark:bg-primary-600/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-indigo-600/15 dark:bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-cyan/10 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Main Container */}
@@ -127,29 +133,32 @@ const Auth: React.FC = () => {
             <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-primary-500/30 group-hover:scale-105 transition-transform">
               <Sparkles className="h-5 w-5" />
             </div>
-            <span className="text-2xl font-black tracking-tight text-white">
-              Tutor<span className="text-primary-400">Hub</span> <span className="text-xs px-2 py-0.5 rounded-full bg-primary-500/20 text-primary-300 font-bold border border-primary-500/30">3D</span>
+            <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              Tutor<span className="text-primary-600 dark:text-primary-400">Hub</span>{' '}
+              <span className="text-xs px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-500/20 text-primary-700 dark:text-primary-300 font-bold border border-primary-200 dark:border-primary-500/30">
+                3D
+              </span>
             </span>
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             {mode === 'login' ? 'Sign In to Your Account' : 'Create Your 3D Account'}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
             Access live interactive 1-on-1 classrooms & verified educators
           </p>
         </div>
 
         {/* Quick Demo One-Click Fill */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-4 mb-6 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xl">
-          <div className="flex items-center gap-2 text-xs text-slate-300 font-semibold">
-            <Zap className="h-4 w-4 text-amber-400 fill-amber-400 animate-pulse" />
+        <div className="bg-white/85 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 mb-6 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xl transition-colors">
+          <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-semibold">
+            <Zap className="h-4 w-4 text-amber-500 dark:text-amber-400 fill-amber-500 dark:fill-amber-400 animate-pulse" />
             <span>Instant Demo Access:</span>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => fillDemoAccount('student')}
-              className="flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded-xl bg-primary-600/20 hover:bg-primary-600/30 text-primary-300 border border-primary-500/30 transition-all flex items-center justify-center gap-1.5"
+              className="flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded-xl bg-primary-50 hover:bg-primary-100 dark:bg-primary-600/20 dark:hover:bg-primary-600/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-500/30 transition-all flex items-center justify-center gap-1.5"
             >
               <BookOpen className="h-3.5 w-3.5" />
               Student (Alex)
@@ -157,7 +166,7 @@ const Auth: React.FC = () => {
             <button
               type="button"
               onClick={() => fillDemoAccount('tutor')}
-              className="flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 transition-all flex items-center justify-center gap-1.5"
+              className="flex-1 sm:flex-none text-xs font-bold px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-600/20 dark:hover:bg-indigo-600/30 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 transition-all flex items-center justify-center gap-1.5"
             >
               <GraduationCap className="h-3.5 w-3.5" />
               Tutor (Rajesh)
@@ -166,10 +175,10 @@ const Auth: React.FC = () => {
         </div>
 
         {/* Card Frame */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
+        <div className="bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 backdrop-blur-2xl shadow-2xl relative overflow-hidden transition-colors">
           
           {/* Top Tabs: Login vs Register */}
-          <div className="grid grid-cols-2 p-1 bg-slate-950 rounded-2xl border border-slate-800/80 mb-6">
+          <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800/80 mb-6">
             <button
               type="button"
               onClick={() => {
@@ -180,7 +189,7 @@ const Auth: React.FC = () => {
               className={`py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 mode === 'login'
                   ? 'bg-gradient-to-r from-primary-600 to-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Sign In
@@ -195,7 +204,7 @@ const Auth: React.FC = () => {
               className={`py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 mode === 'signup'
                   ? 'bg-gradient-to-r from-primary-600 to-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Create Account
@@ -204,7 +213,7 @@ const Auth: React.FC = () => {
 
           {/* Role Switcher */}
           <div className="mb-6">
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
               Select Your Role
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -216,16 +225,16 @@ const Auth: React.FC = () => {
                 }}
                 className={`flex items-center gap-3 p-3 rounded-2xl border transition-all text-left ${
                   role === 'student'
-                    ? 'border-primary-500 bg-primary-500/10 text-white ring-1 ring-primary-500'
-                    : 'border-slate-800 bg-slate-950/50 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                    ? 'border-primary-500 bg-primary-50/80 dark:bg-primary-500/10 text-slate-900 dark:text-white ring-1 ring-primary-500'
+                    : 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
-                <div className={`p-2 rounded-xl ${role === 'student' ? 'bg-primary-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                <div className={`p-2 rounded-xl ${role === 'student' ? 'bg-primary-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>
                   <BookOpen className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-white">Student</div>
-                  <div className="text-[10px] text-slate-400">Learn & Book</div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">Student</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">Learn & Book</div>
                 </div>
               </button>
 
@@ -237,16 +246,16 @@ const Auth: React.FC = () => {
                 }}
                 className={`flex items-center gap-3 p-3 rounded-2xl border transition-all text-left ${
                   role === 'tutor'
-                    ? 'border-indigo-500 bg-indigo-500/10 text-white ring-1 ring-indigo-500'
-                    : 'border-slate-800 bg-slate-950/50 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                    ? 'border-indigo-500 bg-indigo-50/80 dark:bg-indigo-500/10 text-slate-900 dark:text-white ring-1 ring-indigo-500'
+                    : 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
-                <div className={`p-2 rounded-xl ${role === 'tutor' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                <div className={`p-2 rounded-xl ${role === 'tutor' ? 'bg-indigo-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>
                   <GraduationCap className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-white">Tutor / Mentor</div>
-                  <div className="text-[10px] text-slate-400">Teach & Earn</div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">Tutor / Mentor</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">Teach & Earn</div>
                 </div>
               </button>
             </div>
@@ -254,7 +263,7 @@ const Auth: React.FC = () => {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-500/15 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
               <span className="font-bold">⚠️</span>
               <span>{error}</span>
             </div>
@@ -266,18 +275,18 @@ const Auth: React.FC = () => {
             {/* Name (Signup only) */}
             {mode === 'signup' && (
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Full Name
                 </label>
                 <div className="relative">
-                  <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                  <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={role === 'student' ? 'e.g. Alex Johnson' : 'e.g. Dr. Rajesh Sharma'}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
                   />
                 </div>
               </div>
@@ -285,18 +294,18 @@ const Auth: React.FC = () => {
 
             {/* Email */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
                 />
               </div>
             </div>
@@ -304,33 +313,33 @@ const Auth: React.FC = () => {
             {/* Password */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-slate-300">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Password
                 </label>
                 {mode === 'login' && (
                   <button
                     type="button"
                     onClick={() => alert('Demo password reset: You can sign in with any email, or use the 1-Click Demo buttons above!')}
-                    className="text-[11px] text-primary-400 hover:text-primary-300 transition-colors"
+                    className="text-[11px] text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors font-semibold"
                   >
                     Forgot password?
                   </button>
                 )}
               </div>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -340,13 +349,13 @@ const Auth: React.FC = () => {
             {/* Student Specific Fields (Signup) */}
             {mode === 'signup' && role === 'student' && (
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Academic Level
                 </label>
                 <select
                   value={gradeLevel}
                   onChange={(e) => setGradeLevel(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-primary-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary-500 transition-colors"
                 >
                   <option>Middle School (Grade 6-8)</option>
                   <option>High School (Grade 9-10)</option>
@@ -359,9 +368,9 @@ const Auth: React.FC = () => {
 
             {/* Tutor Specific Fields (Signup) */}
             {mode === 'signup' && role === 'tutor' && (
-              <div className="space-y-3 pt-1 border-t border-slate-800">
+              <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Subjects You Teach (Click to toggle)
                   </label>
                   <div className="flex flex-wrap gap-1.5">
@@ -375,7 +384,7 @@ const Auth: React.FC = () => {
                           className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                             active
                               ? 'bg-indigo-600 text-white shadow-sm'
-                              : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                           }`}
                         >
                           {subj} {active && '✓'}
@@ -387,8 +396,8 @@ const Auth: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1">
-                      <Coins className="h-3.5 w-3.5 text-amber-400" /> Hourly Rate (NPR)
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                      <Coins className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" /> Hourly Rate (NPR)
                     </label>
                     <input
                       type="number"
@@ -396,23 +405,23 @@ const Auth: React.FC = () => {
                       step={100}
                       value={hourlyRate}
                       onChange={(e) => setHourlyRate(Number(e.target.value))}
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1">
-                      <Globe className="h-3.5 w-3.5 text-cyan-400" /> Teaching Region
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                      <Globe className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" /> Teaching Region
                     </label>
                     <input
                       type="text"
                       defaultValue="Kathmandu & Online"
-                      className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Short Bio & Teaching Philosophy
                   </label>
                   <textarea
@@ -420,7 +429,7 @@ const Auth: React.FC = () => {
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     placeholder="Briefly describe your experience and teaching methodology..."
-                    className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
                   />
                 </div>
               </div>
@@ -444,12 +453,12 @@ const Auth: React.FC = () => {
           </form>
 
           {/* Trust Badges */}
-          <div className="mt-6 pt-5 border-t border-slate-800/80 flex items-center justify-center gap-6 text-[11px] text-slate-500">
+          <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-center gap-6 text-[11px] text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> 256-bit SSL Encrypted
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" /> 256-bit SSL Encrypted
             </span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5 text-primary-400" /> Instant 1-on-1 Access
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary-600 dark:text-primary-400" /> Instant 1-on-1 Access
             </span>
           </div>
 
@@ -459,7 +468,7 @@ const Auth: React.FC = () => {
         <div className="text-center mt-6">
           <Link
             to="/find-tutors"
-            className="text-xs text-slate-400 hover:text-white transition-colors underline decoration-slate-600 underline-offset-4"
+            className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors underline decoration-slate-400 dark:decoration-slate-600 underline-offset-4 font-semibold"
           >
             Or browse verified tutors as guest →
           </Link>

@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import { useApp } from '../context/AppContext';
-import { api } from '../services/api';
+import { api, SERVER_URL } from '../services/api';
+import MathMarkdown from '../components/MathMarkdown';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/soundEffects';
 
@@ -45,14 +46,24 @@ const Classroom: React.FC = () => {
 
   // Video & Audio Controls
   const [micOn, setMicOn] = useState(true);
-  const [videoOn, setVideoOn] = useState(true);
+  const [videoOn, setVideoOn] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'notes' | 'ai'>('chat');
   const [reaction, setReaction] = useState<string | null>(null);
 
-  // Real Webcam / Media Stream
+  // Real Webcam / WebRTC Media Streams
   const userVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
+  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [remotePeerName, setRemotePeerName] = useState<string | null>(null);
+  const [remoteMediaState, setRemoteMediaState] = useState<{ micOn: boolean; videoOn: boolean }>({
+    micOn: true,
+    videoOn: true,
+  });
   const [hasWebcam, setHasWebcam] = useState(false);
 
   // Whiteboard Canvas
@@ -82,7 +93,7 @@ const Classroom: React.FC = () => {
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([
     {
       role: 'assistant',
-      content: `Hello! I'm your AI Study Assistant for this ${session.subject} session. Ask me to break down formulas, generate practice questions, or explain tricky concepts in simple terms!`,
+      content: `Hello! I'm your **Gemini AI Study Assistant** for this ${session.subject} session. Ask me to derive formulas, solve calculus or physics problems, or generate practice questions!`,
       time: '10:00 AM',
     },
   ]);
@@ -113,30 +124,83 @@ const Classroom: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Real Camera Activation
+  // Sync video element refs whenever streams change
+  useEffect(() => {
+    if (userVideoRef.current && localStream) {
+      userVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream, videoOn, hasWebcam]);
+
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
+
+  // Renegotiate local stream across all connected WebRTC peers
+  const attachStreamToPeersAndRenegotiate = useCallback(async (stream: MediaStream) => {
+    const myName = currentUser?.name || (role === 'tutor' ? 'Rajesh Sharma' : 'Alex Johnson');
+    for (const [peerId, pc] of peerConnectionsRef.current.entries()) {
+      const existingSenders = pc.getSenders();
+      stream.getTracks().forEach((track) => {
+        const matchingSender = existingSenders.find((s) => s.track && s.track.kind === track.kind);
+        if (matchingSender) {
+          matchingSender.replaceTrack(track);
+        } else {
+          pc.addTrack(track, stream);
+        }
+      });
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socketRef.current?.emit('webrtc-offer', {
+          to: peerId,
+          offer,
+          userName: myName,
+          role: role || 'student',
+        });
+      } catch (err) {
+        console.warn('WebRTC renegotiation warning:', err);
+      }
+    }
+  }, [currentUser, role]);
+
+  // Real Camera + Mic Activation with WebRTC Renegotiation
   const toggleCamera = async () => {
     try { sounds.playToggle(!videoOn); } catch {}
-    if (videoOn && hasWebcam && localStream) {
-      localStream.getVideoTracks().forEach((track) => track.stop());
+    if (videoOn && hasWebcam && localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
       setLocalStream(null);
       setHasWebcam(false);
       setVideoOn(false);
-    } else if (!videoOn) {
+      socketRef.current?.emit('webrtc-media-state', { micOn, videoOn: false });
+    } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: micOn });
+        localStreamRef.current = stream;
         setLocalStream(stream);
         setHasWebcam(true);
         setVideoOn(true);
-        if (userVideoRef.current) {
-          userVideoRef.current.srcObject = stream;
-        }
-      } catch (err) {
-        setVideoOn(true);
+        socketRef.current?.emit('webrtc-media-state', { micOn, videoOn: true });
+        await attachStreamToPeersAndRenegotiate(stream);
+      } catch {
+        setVideoOn(false);
         setHasWebcam(false);
       }
-    } else {
-      setVideoOn(false);
     }
+  };
+
+  const toggleMic = () => {
+    const nextMic = !micOn;
+    try { sounds.playToggle(nextMic); } catch {}
+    setMicOn(nextMic);
+    if (localStreamRef.current) {
+      localStreamRef.current.getAudioTracks().forEach((t) => {
+        t.enabled = nextMic;
+      });
+    }
+    socketRef.current?.emit('webrtc-media-state', { micOn: nextMic, videoOn });
   };
 
   const toggleScreenShare = async () => {
@@ -144,15 +208,40 @@ const Classroom: React.FC = () => {
     if (!screenSharing) {
       try {
         const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        screenStreamRef.current = displayStream;
         setScreenSharing(true);
-        displayStream.getVideoTracks()[0].onended = () => {
+        setHasWebcam(true);
+        setVideoOn(true);
+        setLocalStream(displayStream);
+        await attachStreamToPeersAndRenegotiate(displayStream);
+
+        displayStream.getVideoTracks()[0].onended = async () => {
           setScreenSharing(false);
+          screenStreamRef.current = null;
+          if (localStreamRef.current) {
+            setLocalStream(localStreamRef.current);
+            await attachStreamToPeersAndRenegotiate(localStreamRef.current);
+          } else {
+            setLocalStream(null);
+            setHasWebcam(false);
+            setVideoOn(false);
+          }
         };
       } catch {
         setScreenSharing(false);
       }
     } else {
+      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current = null;
       setScreenSharing(false);
+      if (localStreamRef.current) {
+        setLocalStream(localStreamRef.current);
+        await attachStreamToPeersAndRenegotiate(localStreamRef.current);
+      } else {
+        setLocalStream(null);
+        setHasWebcam(false);
+        setVideoOn(false);
+      }
     }
   };
 
@@ -202,20 +291,59 @@ const Classroom: React.FC = () => {
   }, [drawGrid, mobileTab]);
 
   // ----------------------------------------------------
-  // Real-Time Socket.io Connection & Listeners
+  // Real-Time Socket.io + WebRTC Signaling Connection
   // ----------------------------------------------------
   useEffect(() => {
-    const socket = io('http://localhost:5000', {
+    const socket = io(SERVER_URL, {
       transports: ['websocket', 'polling'],
       timeout: 5000,
     });
     socketRef.current = socket;
 
+    const myName = currentUser?.name || (role === 'tutor' ? 'Rajesh Sharma' : 'Alex Johnson');
+
+    const getOrCreatePeerConnection = (peerId: string, peerLabel?: string) => {
+      const existing = peerConnectionsRef.current.get(peerId);
+      if (existing) return existing;
+
+      const pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+        ],
+      });
+
+      // Attach local camera/screen tracks if already enabled
+      const activeOutStream = screenStreamRef.current || localStreamRef.current;
+      if (activeOutStream) {
+        activeOutStream.getTracks().forEach((track) => pc.addTrack(track, activeOutStream));
+      }
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('webrtc-ice-candidate', {
+            to: peerId,
+            candidate: event.candidate,
+          });
+        }
+      };
+
+      pc.ontrack = (event) => {
+        if (event.streams && event.streams[0]) {
+          setRemoteStream(event.streams[0]);
+          if (peerLabel) setRemotePeerName(peerLabel);
+        }
+      };
+
+      peerConnectionsRef.current.set(peerId, pc);
+      return pc;
+    };
+
     socket.on('connect', () => {
       setIsConnected(true);
       socket.emit('join-room', {
         roomId: sessionId || 's1',
-        userName: currentUser?.name || (role === 'tutor' ? 'Rajesh Sharma' : 'Alex Johnson'),
+        userName: myName,
         role: role || 'student',
       });
     });
@@ -224,8 +352,30 @@ const Classroom: React.FC = () => {
       setIsConnected(false);
     });
 
+    // When joining an active room, initiate WebRTC offers to existing peers
+    socket.on('room-peers', async (peers: Array<{ socketId: string; userName: string; role: string }>) => {
+      setActivePeers(peers.length + 1);
+      for (const peer of peers) {
+        setRemotePeerName(`${peer.userName} (${peer.role})`);
+        const pc = getOrCreatePeerConnection(peer.socketId, `${peer.userName} (${peer.role})`);
+        try {
+          const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+          await pc.setLocalDescription(offer);
+          socket.emit('webrtc-offer', {
+            to: peer.socketId,
+            offer,
+            userName: myName,
+            role: role || 'student',
+          });
+        } catch (err) {
+          console.warn('WebRTC initial offer error:', err);
+        }
+      }
+    });
+
     socket.on('user-joined', (peer) => {
       setActivePeers((prev) => prev + 1);
+      setRemotePeerName(`${peer.userName} (${peer.role})`);
       setChatMessages((prev) => [
         ...prev,
         { sender: 'System', text: `🟢 ${peer.userName} (${peer.role}) joined the live classroom.`, time: peer.time },
@@ -233,8 +383,56 @@ const Classroom: React.FC = () => {
       try { sounds.playJoinCall(); } catch {}
     });
 
-    socket.on('user-left', () => {
+    socket.on('webrtc-offer', async ({ from, offer, userName, role: peerRole }) => {
+      const label = userName ? `${userName} (${peerRole || 'peer'})` : undefined;
+      if (label) setRemotePeerName(label);
+      const pc = getOrCreatePeerConnection(from, label);
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('webrtc-answer', { to: from, answer });
+      } catch (err) {
+        console.warn('WebRTC offer handle error:', err);
+      }
+    });
+
+    socket.on('webrtc-answer', async ({ from, answer }) => {
+      const pc = peerConnectionsRef.current.get(from);
+      if (pc) {
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        } catch (err) {
+          console.warn('WebRTC answer error:', err);
+        }
+      }
+    });
+
+    socket.on('webrtc-ice-candidate', async ({ from, candidate }) => {
+      const pc = peerConnectionsRef.current.get(from);
+      if (pc && candidate) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+          console.warn('ICE candidate error:', err);
+        }
+      }
+    });
+
+    socket.on('webrtc-media-state', (state) => {
+      setRemoteMediaState({ micOn: state.micOn, videoOn: state.videoOn });
+    });
+
+    socket.on('user-left', ({ socketId } = {}) => {
       setActivePeers((prev) => Math.max(1, prev - 1));
+      if (socketId && peerConnectionsRef.current.has(socketId)) {
+        peerConnectionsRef.current.get(socketId)?.close();
+        peerConnectionsRef.current.delete(socketId);
+      }
+      if (peerConnectionsRef.current.size === 0) {
+        setRemoteStream(null);
+        setRemotePeerName(null);
+      }
     });
 
     // Remote stroke from peer
@@ -283,6 +481,10 @@ const Classroom: React.FC = () => {
     });
 
     return () => {
+      peerConnectionsRef.current.forEach((pc) => pc.close());
+      peerConnectionsRef.current.clear();
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
       socket.disconnect();
     };
   }, [sessionId, role, currentUser, drawGrid]);
@@ -425,7 +627,7 @@ const Classroom: React.FC = () => {
     setAiLoading(true);
 
     try {
-      const response = await api.askCopilot(query, session.subject, session.tutorName);
+      const response = await api.askCopilot(query, session.subject, session.tutorName, aiMessages);
       try { sounds.playMessage(); } catch {}
 
       setAiMessages((prev) => [
@@ -597,21 +799,35 @@ const Classroom: React.FC = () => {
           {/* Dual Video Stream Bar */}
           <div className="grid grid-cols-2 gap-2 sm:gap-4 h-32 sm:h-44 md:h-48 flex-shrink-0">
             
-            {/* Remote Tutor Video Feed */}
-            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 shadow-md group">
-              <img 
-                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80" 
-                alt="Tutor"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
+            {/* Remote Tutor / Peer WebRTC Video Feed */}
+            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 shadow-md group flex items-center justify-center">
+              {remoteStream ? (
+                <video
+                  ref={remoteVideoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <>
+                  <img 
+                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80" 
+                    alt="Tutor"
+                    className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-slate-950/75 border border-white/10 text-[9px] font-bold text-slate-300 backdrop-blur-md">
+                    {activePeers > 1 ? 'Peer Audio/Cam Standby' : 'Waiting for 2nd Peer Tab'}
+                  </div>
+                </>
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
               <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold text-white border border-white/10">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="truncate">{session.tutorName} (Tutor)</span>
+                <span className={`h-2 w-2 rounded-full ${remoteStream ? 'bg-emerald-500 animate-pulse' : remoteMediaState.micOn ? 'bg-amber-400' : 'bg-rose-500'}`} />
+                <span className="truncate">{remotePeerName || `${session.tutorName} (Tutor)`}</span>
               </div>
             </div>
 
-            {/* Local Student Video Feed */}
+            {/* Local Student / User Video Feed */}
             <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 shadow-md flex items-center justify-center">
               {hasWebcam && videoOn ? (
                 <video 
@@ -619,7 +835,7 @@ const Classroom: React.FC = () => {
                   autoPlay 
                   playsInline 
                   muted 
-                  className="w-full h-full object-cover transform -scale-x-100"
+                  className={`w-full h-full object-cover ${screenSharing ? '' : 'transform -scale-x-100'}`}
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center text-slate-400">
@@ -743,10 +959,7 @@ const Classroom: React.FC = () => {
             {/* Bottom Hardware Controls Pill */}
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 p-1.5 bg-slate-950/85 backdrop-blur-xl rounded-2xl border border-slate-800 shadow-xl">
               <button
-                onClick={() => {
-                  try { sounds.playToggle(!micOn); } catch {}
-                  setMicOn(!micOn);
-                }}
+                onClick={toggleMic}
                 className={`p-2 rounded-xl transition-all ${
                   micOn ? 'bg-slate-800 text-white' : 'bg-rose-600 text-white'
                 }`}
@@ -897,19 +1110,17 @@ const Classroom: React.FC = () => {
                     <div className="flex items-center justify-between mb-1 text-[10px] text-slate-400">
                       <span className="font-bold flex items-center gap-1">
                         {msg.role === 'assistant' ? <Sparkles className="h-3 w-3 text-amber-300" /> : null}
-                        {msg.role === 'assistant' ? 'Tutor Hub AI Copilot' : 'You'}
+                        {msg.role === 'assistant' ? 'Gemini AI Copilot' : 'You'}
                       </span>
                       <span>{msg.time}</span>
                     </div>
-                    <div className="whitespace-pre-wrap leading-relaxed text-xs">
-                      {msg.content}
-                    </div>
+                    <MathMarkdown content={msg.content} className="text-xs leading-relaxed" />
                   </div>
                 ))}
                 {aiLoading && (
                   <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
                     <div className="h-3 w-3 rounded-full bg-primary-500 animate-ping" />
-                    <span>Analyzing formula with academic reasoning engine...</span>
+                    <span>Solving with Google Gemini AI...</span>
                   </div>
                 )}
               </div>

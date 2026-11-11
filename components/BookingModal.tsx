@@ -88,14 +88,83 @@ export const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClo
     setStep('payment');
   };
 
+  const handleRealEsewaRedirect = async () => {
+    try { sounds.playClick(); } catch {}
+    setIsProcessing(true);
+
+    try {
+      const payload = await api.initiateEsewa(totalPrice);
+      if (payload?.gatewayUrl && payload?.fields) {
+        // Save pending booking to finalize upon return from eSewa Sandbox
+        sessionStorage.setItem(
+          'pendingEsewaBooking',
+          JSON.stringify({
+            tutorName: tutor.name,
+            subject: selectedSubject,
+            date: selectedDate,
+            time: selectedTime,
+            duration: `${duration} hour${duration > 1 ? 's' : ''}`,
+            price: totalPrice,
+            status: 'Upcoming',
+          })
+        );
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = payload.gatewayUrl;
+        Object.entries(payload.fields).forEach(([key, val]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = val;
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
+      // Fallback if backend is unreachable
+      await handleProcessPayment();
+    } catch (err) {
+      console.error('eSewa redirect error:', err);
+      setIsProcessing(false);
+    }
+  };
+
   const handleProcessPayment = async () => {
     try { sounds.playClick(); } catch {}
     setIsProcessing(true);
 
     try {
-      // Real sandbox gateway verification
-      const verification = await api.verifyPayment(paymentMethod, totalPrice);
-      setTxRef(verification.transactionRef);
+      let ref = '';
+      if (paymentMethod === 'khalti') {
+        const khaltiRes = await api.initiateKhalti({
+          amount: totalPrice,
+          tutorName: tutor.name,
+        });
+        if (khaltiRes.mode === 'live-redirect' && khaltiRes.paymentUrl) {
+          sessionStorage.setItem(
+            'pendingEsewaBooking',
+            JSON.stringify({
+              tutorName: tutor.name,
+              subject: selectedSubject,
+              date: selectedDate,
+              time: selectedTime,
+              duration: `${duration} hour${duration > 1 ? 's' : ''}`,
+              price: totalPrice,
+              status: 'Upcoming',
+            })
+          );
+          window.location.href = khaltiRes.paymentUrl;
+          return;
+        }
+        ref = khaltiRes.transactionRef || `KHALTI-SANDBOX-${Date.now()}`;
+      } else {
+        const verification = await api.verifyPayment(paymentMethod, totalPrice);
+        ref = verification.transactionRef;
+      }
+
+      setTxRef(ref);
 
       try { sounds.playSuccess(); } catch {}
 
@@ -490,6 +559,20 @@ export const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClo
                   </div>
                 )}
 
+                {/* eSewa UAT Sandbox Test Credentials Info */}
+                {paymentMethod === 'esewa' && (
+                  <div className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-700 dark:text-slate-300 space-y-1">
+                    <span className="font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">
+                      eSewa UAT Sandbox Test Credentials
+                    </span>
+                    <div className="font-mono flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
+                      <span>ID: <strong>9806800001</strong></span>
+                      <span>MPIN: <strong>1122</strong></span>
+                      <span>OTP: <strong>123456</strong></span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Escrow Guarantee Pill */}
                 <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-900 dark:text-emerald-300 flex items-center gap-2.5">
                   <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
@@ -499,22 +582,38 @@ export const BookingModal: React.FC<BookingModalProps> = ({ tutor, isOpen, onClo
                 </div>
 
                 {/* Step 2 Actions */}
-                <div className="pt-2 flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setStep('select')}
-                    className="py-3 px-5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isProcessing}
-                    onClick={handleProcessPayment}
-                    className="flex-1 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs sm:text-sm font-black shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {isProcessing ? 'Verifying with Sandbox Gateway...' : `Lock NPR ${totalPrice} in Escrow`}
-                  </button>
+                <div className="pt-2 space-y-2.5">
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setStep('select')}
+                      className="py-3 px-5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isProcessing}
+                      onClick={paymentMethod === 'esewa' ? handleRealEsewaRedirect : handleProcessPayment}
+                      className="flex-1 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs sm:text-sm font-black shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isProcessing
+                        ? 'Connecting to Sandbox Gateway...'
+                        : paymentMethod === 'esewa'
+                        ? `Pay NPR ${totalPrice} on eSewa Sandbox →`
+                        : `Lock NPR ${totalPrice} in Escrow`}
+                    </button>
+                  </div>
+                  {paymentMethod === 'esewa' && (
+                    <button
+                      type="button"
+                      disabled={isProcessing}
+                      onClick={handleProcessPayment}
+                      className="w-full py-2 text-[11px] font-bold text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 transition-colors"
+                    >
+                      Or complete via Instant Local Escrow Demo (skip eSewa redirect)
+                    </button>
+                  )}
                 </div>
 
               </div>

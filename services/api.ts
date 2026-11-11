@@ -1,7 +1,8 @@
 import { Tutor, Session, User, Review } from '../types';
 import { MOCK_TUTORS, MOCK_STUDENT_SESSIONS, MOCK_REVIEWS, MOCK_USERS } from '../constants';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+export const SERVER_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = `${SERVER_URL}/api`;
 
 // Helper for fetch with timeout & auth header
 async function fetchWithTimeout(resource: string, options: RequestInit = {}, timeout = 4000) {
@@ -211,13 +212,18 @@ export const api = {
     };
   },
 
-  // 5. Real AI Copilot Engine
-  async askCopilot(query: string, subject?: string, tutorName?: string): Promise<string> {
+  // 5. Real Google Gemini AI Copilot Engine
+  async askCopilot(
+    query: string,
+    subject?: string,
+    tutorName?: string,
+    history?: Array<{ role: string; text?: string; content?: string }>
+  ): Promise<string> {
     try {
       const res = await fetchWithTimeout(`${API_BASE_URL}/copilot`, {
         method: 'POST',
-        body: JSON.stringify({ query, subject, tutorName }),
-      }, 5000);
+        body: JSON.stringify({ query, subject, tutorName, history }),
+      }, 20000);
       if (res.ok) {
         const json = await res.json();
         return json.answer;
@@ -234,7 +240,61 @@ export const api = {
     return `💡 **Academic Copilot Explanation:**\nFor **${subject || 'this session'}**, break equations into steps and verify critical boundary conditions!`;
   },
 
-  // 6. Real Payment Gateway Verification
+  // 6. Real Nepal Payment Gateway Endpoints (eSewa v2 UAT & Khalti v2)
+  async initiateEsewa(amount: number): Promise<{ gatewayUrl: string; fields: Record<string, string> } | null> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/payments/esewa/initiate`, {
+        method: 'POST',
+        body: JSON.stringify({ amount, returnBaseUrl: window.location.origin }),
+      }, 6000);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('eSewa initiate endpoint unreachable:', err);
+    }
+    return null;
+  },
+
+  async verifyEsewa(encodedData: string): Promise<{ verified: boolean; transactionRef: string; message: string } | null> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/payments/esewa/verify`, {
+        method: 'POST',
+        body: JSON.stringify({ encodedData }),
+      }, 8000);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('eSewa verify endpoint unreachable:', err);
+    }
+    return null;
+  },
+
+  async initiateKhalti(payload: { amount: number; tutorName: string; customerName?: string }): Promise<{
+    mode: 'live-redirect' | 'sandbox-simulated';
+    paymentUrl?: string;
+    transactionRef?: string;
+    message?: string;
+  }> {
+    try {
+      const res = await fetchWithTimeout(`${API_BASE_URL}/payments/khalti/initiate`, {
+        method: 'POST',
+        body: JSON.stringify({ ...payload, returnBaseUrl: window.location.origin }),
+      }, 8000);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('Khalti initiate endpoint unreachable, using client sandbox:', err);
+    }
+    return {
+      mode: 'sandbox-simulated',
+      transactionRef: `KHALTI-SANDBOX-${Math.floor(100000 + Math.random() * 900000)}`,
+      message: 'Khalti sandbox simulation completed cleanly.',
+    };
+  },
+
   async verifyPayment(paymentMethod: string, amount: number, bookingId?: string): Promise<{ transactionRef: string; message: string }> {
     try {
       const res = await fetchWithTimeout(`${API_BASE_URL}/payments/verify`, {
